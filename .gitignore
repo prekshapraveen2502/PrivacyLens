@@ -1,0 +1,21 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Collected policy texts (copyrighted by their publishers; keep the manifest of URLs instead)
+data/policies/
+
+# Generated files
+docs/*.png
+*.log
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

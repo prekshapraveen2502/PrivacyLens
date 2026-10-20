@@ -1,0 +1,11 @@
+service_id,service,document_type,region,why_included,url,collected_on,word_count,status
+openai,OpenAI (ChatGPT),privacy_policy,US,AI training on content by default with opt-out; pairs with EEA version,,,,
+openai,OpenAI (ChatGPT),privacy_policy,EEA,Regional version of the same service,,,,
+linkedin,LinkedIn,privacy_policy,Global,Generative AI training with opt-out; regional rules changed over time,,,,
+meta,Meta (Facebook/Instagram),privacy_policy,Global,AI training on public posts; EU objection form,,,,
+x,X,privacy_policy,Global,AI (Grok) training on public posts,,,,
+tiktok,TikTok,privacy_policy,US,Separate regional policies; pairs with EEA version,,,,
+tiktok,TikTok,privacy_policy,EEA,Regional version of the same service,,,,
+zoom,Zoom,terms_of_service,Global,Contrast case: states it does not train AI on audio/video/chat,,,,
+spotify,Spotify,privacy_policy,Global,General data practices; advertising partners,,,,
+uber,Uber,privacy_policy,Global,Location data; third-party sharing,,,,

@@ -1,0 +1,8 @@
+neo4j
+requests
+python-dotenv
+trafilatura
+rdflib
+pyshacl
+pydantic
+anthropic
