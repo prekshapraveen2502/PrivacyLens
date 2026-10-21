@@ -24,6 +24,10 @@ MANIFEST = ROOT / "data" / "manifest.csv"
 OUT_DIR = ROOT / "data" / "policies"
 MIN_WORDS = 1500  # real privacy policies are almost always longer than this
 
+def min_words(row):
+    # Supplemental notices are short by nature; full policies are long.
+    return 200 if row["document_type"] == "supplemental_notice" else MIN_WORDS
+
 
 def file_name(row):
     return f"{row['service_id']}_{row['document_type']}_{row['region'].lower()}.txt"
@@ -38,16 +42,31 @@ def collect(row):
 
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    with MANIFEST.open(newline="", encoding="utf-8") as f:
+    with MANIFEST.open(newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
+        reader.fieldnames = [h.strip() for h in reader.fieldnames]
         fields = reader.fieldnames
-        rows = list(reader)
+        rows = [{k: (v or "").strip() for k, v in r.items()} for r in reader]
+
+    required = {"service_id", "service", "document_type", "region", "url", "status"}
+    missing = required - set(fields)
+    if missing:
+        raise SystemExit(f"manifest.csv header is missing {sorted(missing)}. Found: {fields}")
 
     today = date.today().isoformat()
     for row in rows:
         if not row["url"] or row["status"] == "ok":
             continue
         path = OUT_DIR / file_name(row)
+
+        if path.exists():
+            body = path.read_text(encoding="utf-8").split("=" * 60, 1)[-1]
+            if len(body.split()) >= min_words(row):
+                row["status"] = "ok"
+                row["word_count"] = str(len(body.split()))
+                print(f"Keeping existing text: {path.name} ({row['word_count']} words)")
+                continue
+
         print(f"Collecting {row['service']} ({row['region']}) ...")
         try:
             text = collect(row)
@@ -68,7 +87,7 @@ def main():
 
         row["collected_on"] = today
         row["word_count"] = str(words)
-        row["status"] = "ok" if words >= MIN_WORDS else "check_manually"
+        row["status"] = "ok" if words >= min_words(row) else "check_manually"
         print(f"  {words} words -> {path.name} [{row['status']}]")
 
     with MANIFEST.open("w", newline="", encoding="utf-8") as f:

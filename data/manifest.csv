@@ -1,11 +1,14 @@
 service_id,service,document_type,region,why_included,url,collected_on,word_count,status
-openai,OpenAI (ChatGPT),privacy_policy,US,AI training on content by default with opt-out; pairs with EEA version,,,,
-openai,OpenAI (ChatGPT),privacy_policy,EEA,Regional version of the same service,,,,
-linkedin,LinkedIn,privacy_policy,Global,Generative AI training with opt-out; regional rules changed over time,,,,
-meta,Meta (Facebook/Instagram),privacy_policy,Global,AI training on public posts; EU objection form,,,,
-x,X,privacy_policy,Global,AI (Grok) training on public posts,,,,
-tiktok,TikTok,privacy_policy,US,Separate regional policies; pairs with EEA version,,,,
-tiktok,TikTok,privacy_policy,EEA,Regional version of the same service,,,,
-zoom,Zoom,terms_of_service,Global,Contrast case: states it does not train AI on audio/video/chat,,,,
-spotify,Spotify,privacy_policy,Global,General data practices; advertising partners,,,,
-uber,Uber,privacy_policy,Global,Location data; third-party sharing,,,,
+openai,OpenAI (ChatGPT),privacy_policy,US,AI training on content by default with opt-out; pairs with EEA version,https://openai.com/policies/privacy-policy,2026-10-21,4058,ok
+openai,OpenAI (ChatGPT),privacy_policy,EEA,Regional version of the same service,https://openai.com/policies/eu-privacy-policy/,2026-10-21,3857,ok
+linkedin,LinkedIn,privacy_policy,Global,Generative AI training with opt-out; regional rules changed over time,https://www.linkedin.com/legal/privacy-policy,2026-10-19,5139,ok
+meta,Meta (Facebook/Instagram),privacy_policy,Global,AI training on public posts; EU objection form,https://www.facebook.com/privacy/policy/,,21469,ok
+meta,Meta (Facebook/Instagram),supplemental_notice,US,US state-law rights,https://mbasic.facebook.com/privacy/policy/printable/version/26776488768644674/#annotation-1,2026-10-21,10211,ok
+x,X,privacy_policy,Global,AI (Grok) training on public posts,https://x.com/en/privacy,2026-10-19,5169,ok
+tiktok,TikTok,privacy_policy,US,Separate regional policies; pairs with EEA version,https://www.tiktok.com/legal/page/us/privacy-policy/en,2026-10-19,4255,ok
+tiktok,TikTok,privacy_policy,EEA,Regional version of the same service,https://www.tiktok.com/legal/page/eea/privacy-policy/en,2026-10-19,6967,ok
+zoom,Zoom,privacy_policy,Global,Meeting and account data practices,https://www.zoom.com/en/trust/privacy/privacy-statement/,2026-10-19,8268,ok
+zoom,Zoom,terms_of_service,Global,Contrast case: states it does not train AI on audio/video/chat,https://www.zoom.com/en/trust/terms/,2026-10-21,13613,ok
+spotify,Spotify,privacy_policy,Global,General data practices; advertising partners,https://www.spotify.com/us/legal/privacy-policy/,2026-10-19,5634,ok
+uber,Uber,privacy_policy,Global,Rider privacy notice: location data; third-party sharing; regional sections,https://www.uber.com/global/en/privacy-notice-riders-order-recipients/,2026-10-21,7732,ok
+uber,Uber,supplemental_notice,US,US state-law rights: opt-out of sale/sharing for targeted advertising,https://privacy.uber.com/us,2026-10-21,1582,ok
