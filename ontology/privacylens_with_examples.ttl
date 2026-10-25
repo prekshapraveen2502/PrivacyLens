@@ -1,0 +1,832 @@
+@prefix c: <https://privacylens.example.org/concept/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dpv: <https://w3id.org/dpv#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pd: <https://w3id.org/dpv/pd#> .
+@prefix pl: <https://privacylens.example.org/ontology#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://privacylens.example.org/ontology> a owl:Ontology ;
+    rdfs:label "PrivacyLens ontology"@en ;
+    dcterms:description "What privacy policies say about collecting, sharing and using personal data, and what those terms mean under GDPR, the CCPA and India's DPDP Act."@en ;
+    owl:versionInfo "0.1" .
+
+pl:AITrainingFlow a owl:Class ;
+    rdfs:label "AI training flow"@en ;
+    rdfs:comment "A flow stating that data IS used for AI model training."@en ;
+    owl:equivalentClass [ a owl:Class ;
+            owl:intersectionOf ( pl:Flow [ a owl:Restriction ;
+                        owl:hasValue c:PL-012 ;
+                        owl:onProperty pl:hasPurpose ] [ a owl:Restriction ;
+                        owl:hasValue pl:Does ;
+                        owl:onProperty pl:hasCertainty ] ) ] .
+
+pl:PossibleAITrainingFlow a owl:Class ;
+    rdfs:label "Possible AI training flow"@en ;
+    rdfs:comment "A flow stating that data MAY be used for AI model training."@en ;
+    owl:equivalentClass [ a owl:Class ;
+            owl:intersectionOf ( pl:Flow [ a owl:Restriction ;
+                        owl:hasValue c:PL-012 ;
+                        owl:onProperty pl:hasPurpose ] [ a owl:Restriction ;
+                        owl:hasValue pl:May ;
+                        owl:onProperty pl:hasCertainty ] ) ] .
+
+pl:appliesIn a owl:ObjectProperty ;
+    rdfs:domain pl:Law ;
+    rdfs:range pl:Jurisdiction .
+
+pl:collectedOn a owl:DatatypeProperty ;
+    rdfs:domain pl:Policy ;
+    rdfs:range xsd:date .
+
+pl:concernsData a owl:ObjectProperty ;
+    rdfs:domain pl:Flow .
+
+pl:definedIn a owl:ObjectProperty ;
+    rdfs:range pl:Law .
+
+pl:documentType a owl:DatatypeProperty ;
+    rdfs:domain pl:Policy ;
+    rdfs:range xsd:string .
+
+pl:effectiveDate a owl:DatatypeProperty ;
+    rdfs:domain pl:Policy ;
+    rdfs:range xsd:date .
+
+pl:example_policy a pl:Policy ;
+    pl:hasFlow pl:example_flow_1,
+        pl:example_flow_2 ;
+    pl:ofService pl:example_service .
+
+pl:excludedIn a owl:ObjectProperty ;
+    rdfs:domain pl:Flow ;
+    rdfs:range pl:Jurisdiction .
+
+pl:grantsRight a owl:ObjectProperty ;
+    rdfs:domain pl:Law .
+
+pl:hasAction a owl:ObjectProperty ;
+    rdfs:domain pl:Flow .
+
+pl:hasFlow a owl:ObjectProperty ;
+    rdfs:domain pl:Policy ;
+    rdfs:range pl:Flow .
+
+pl:mappingStatus a owl:AnnotationProperty .
+
+pl:ofService a owl:ObjectProperty ;
+    rdfs:domain pl:Policy ;
+    rdfs:range pl:Service .
+
+pl:optOutAvailable a owl:DatatypeProperty ;
+    rdfs:domain pl:Flow ;
+    rdfs:range xsd:string .
+
+pl:recipient a owl:ObjectProperty ;
+    rdfs:domain pl:Flow ;
+    rdfs:range pl:Organisation .
+
+pl:recipientCategory a owl:ObjectProperty ;
+    rdfs:domain pl:Flow .
+
+pl:region a owl:DatatypeProperty ;
+    rdfs:domain pl:Policy ;
+    rdfs:range xsd:string .
+
+pl:rightConcerns a owl:ObjectProperty .
+
+pl:sourceURL a owl:DatatypeProperty ;
+    rdfs:domain pl:Policy ;
+    rdfs:range xsd:anyURI .
+
+pl:supportedBy a owl:ObjectProperty ;
+    rdfs:domain pl:Flow ;
+    rdfs:range pl:Statement .
+
+pl:text a owl:DatatypeProperty ;
+    rdfs:domain pl:Statement ;
+    rdfs:range xsd:string .
+
+c:PL-004 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber rider notice: determines approximate location"@en ;
+    skos:altLabel "IP-based location"@en,
+        "city-level location"@en,
+        "coarse location"@en,
+        "general location"@en ;
+    skos:broadMatch pd:Location ;
+    skos:broader c:PL-002 ;
+    skos:definition "Location data that identifies only a general area, such as a city or region, often inferred from an IP address."@en ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:notation "PL-004" ;
+    skos:prefLabel "Approximate location"@en ;
+    skos:scopeNote "Use when the policy says location is estimated or general rather than exact."@en ;
+    pl:mappingStatus "own concept" .
+
+c:PL-005 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber rider notice (account information)"@en ;
+    skos:altLabel "contact details"@en,
+        "contact info"@en,
+        "email address"@en,
+        "phone number"@en,
+        "postal address"@en ;
+    skos:broader c:PL-001 ;
+    skos:definition "Personal data used to reach a person, such as an email address, phone number, or postal address."@en ;
+    skos:exactMatch pd:Contact ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:notation "PL-005" ;
+    skos:prefLabel "Contact information"@en ;
+    pl:mappingStatus "verified" .
+
+c:PL-007 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber rider notice (device data: advertising identifiers, IP address)"@en ;
+    skos:altLabel "IP address"@en,
+        "advertising ID"@en,
+        "advertising identifier"@en,
+        "device ID"@en,
+        "unique device identifier"@en ;
+    skos:broader c:PL-001 ;
+    skos:definition "An identifier tied to a device or browser that lets a service or its partners recognise that device over time."@en ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:notation "PL-007" ;
+    skos:prefLabel "Device identifier"@en ;
+    skos:scopeNote "IP address is listed here as an identifier; if a policy uses it only to estimate location, also tag PL-004."@en ;
+    pl:mappingStatus "own concept (check PD extension)" .
+
+c:PL-008 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Zoom terms s.10.5; Uber rider notice (usage data)"@en ;
+    skos:altLabel "activity data"@en,
+        "diagnostic data"@en,
+        "product usage data"@en,
+        "service generated data"@en,
+        "telemetry"@en ;
+    skos:broader c:PL-001 ;
+    skos:definition "Data about how a person interacts with a service, such as features used, pages viewed, searches, and crashes."@en ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:notation "PL-008" ;
+    skos:prefLabel "Usage data"@en ;
+    skos:scopeNote "Zoom's 'Service Generated Data' maps here, not to user content (PL-006)."@en ;
+    pl:mappingStatus "own concept" .
+
+c:PL-009 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber rider notice: 'To provide our services'"@en ;
+    skos:altLabel "operating the service"@en,
+        "providing the service"@en,
+        "to provide our services"@en ;
+    skos:definition "The purpose of using data to deliver, maintain, or operate the service the person asked for."@en ;
+    skos:exactMatch dpv:ServiceProvision ;
+    skos:inScheme pl:PurposeScheme ;
+    skos:notation "PL-009" ;
+    skos:prefLabel "Service provision"@en ;
+    pl:mappingStatus "verified" .
+
+c:PL-010 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber US notice; Uber rider notice (marketing and advertising)"@en ;
+    skos:altLabel "ad personalization"@en,
+        "cross-context behavioral advertising"@en,
+        "personalized ads"@en,
+        "targeted advertising"@en ;
+    skos:broader c:PL-011 ;
+    skos:definition "The purpose of using data to select, show, or measure advertisements."@en ;
+    skos:exactMatch dpv:Advertising ;
+    skos:inScheme pl:PurposeScheme ;
+    skos:notation "PL-010" ;
+    skos:prefLabel "Advertising"@en ;
+    skos:scopeNote "Under CCPA, 'sharing' means disclosure for targeted advertising (see PL-015)."@en ;
+    pl:mappingStatus "verified" .
+
+c:PL-018 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber rider notice (ad intermediaries, ad and marketing partners); Uber US notice"@en ;
+    skos:altLabel "ad intermediary"@en,
+        "ad network"@en,
+        "ad technology vendor"@en,
+        "advertiser"@en,
+        "marketing partner"@en ;
+    skos:broader c:PL-017 ;
+    skos:definition "A third party that receives data in order to show, target, or measure advertising."@en ;
+    skos:inScheme pl:RecipientScheme ;
+    skos:notation "PL-018" ;
+    skos:prefLabel "Advertising partner"@en ;
+    pl:mappingStatus "own concept" .
+
+c:PL-019 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber US notice ('Data Sharing' setting); Uber rider notice (privacy settings)"@en ;
+    skos:altLabel "disable"@en,
+        "opt out"@en,
+        "turn off"@en,
+        "unselect a setting"@en ;
+    skos:definition "A control that lets a person stop a specific use or sharing of their data while continuing to use the service."@en ;
+    skos:inScheme pl:ControlScheme ;
+    skos:notation "PL-019" ;
+    skos:prefLabel "Opt-out"@en ;
+    skos:scopeNote "Record what the opt-out applies to (for example, AI model training or advertising)."@en ;
+    pl:mappingStatus "own concept" .
+
+c:PL-101 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "GDPR Article 4(1)"@en ;
+    skos:closeMatch c:PL-001 ;
+    skos:definition "Under GDPR, any information relating to an identified or identifiable natural person."@en ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:notation "PL-101" ;
+    skos:prefLabel "Personal data (GDPR)"@en ;
+    pl:definedIn pl:GDPR ;
+    pl:mappingStatus "check against statute text" .
+
+c:PL-102 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Cal. Civ. Code § 1798.140"@en ;
+    skos:altLabel "personal info"@en ;
+    skos:closeMatch c:PL-001 ;
+    skos:definition "Under the CCPA, information that identifies or could reasonably be linked to a particular consumer or household."@en ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:notation "PL-102" ;
+    skos:prefLabel "Personal information (CCPA)"@en ;
+    skos:scopeNote "Broader than PL-101 in one respect: it can cover a household, not only an individual."@en ;
+    pl:definedIn pl:CCPA ;
+    pl:mappingStatus "check against statute text" .
+
+c:PL-103 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Digital Personal Data Protection Act, 2023"@en ;
+    skos:altLabel "digital personal data"@en ;
+    skos:closeMatch c:PL-001 ;
+    skos:definition "Under India's DPDP Act, data about an individual who is identifiable by or in relation to that data."@en ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:notation "PL-103" ;
+    skos:prefLabel "Personal data (DPDP)"@en ;
+    skos:scopeNote "The Act applies to personal data in digital form, including data digitised after collection."@en ;
+    pl:definedIn pl:DPDP ;
+    pl:mappingStatus "check against statute text" .
+
+c:PL-104 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "GDPR Article 9"@en ;
+    skos:altLabel "special category data"@en ;
+    skos:closeMatch c:PL-024 ;
+    skos:definition "Under GDPR, personal data needing extra protection, such as health, biometric, or religious data."@en ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:notation "PL-104" ;
+    skos:prefLabel "Special categories of personal data (GDPR)"@en ;
+    skos:scopeNote "closeMatch PL-105 (CCPA), but the lists differ: precise geolocation is sensitive under the CCPA and is not a GDPR special category."@en ;
+    pl:definedIn pl:GDPR ;
+    pl:mappingStatus "check against statute text" .
+
+c:PL-108 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "GDPR Article 4(7)"@en ;
+    skos:altLabel "data controller"@en ;
+    skos:closeMatch c:PL-023 ;
+    skos:definition "Under GDPR, the body that determines the purposes and means of processing personal data."@en ;
+    skos:inScheme pl:RoleScheme ;
+    skos:notation "PL-108" ;
+    skos:prefLabel "Controller (GDPR)"@en ;
+    pl:definedIn pl:GDPR ;
+    pl:mappingStatus "check against statute text" .
+
+c:PL-109 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Cal. Civ. Code § 1798.140"@en ;
+    skos:closeMatch c:PL-023 ;
+    skos:definition "Under the CCPA, a for-profit entity that decides why and how consumers' personal information is processed and meets the Act's size or data thresholds."@en ;
+    skos:inScheme pl:RoleScheme ;
+    skos:notation "PL-109" ;
+    skos:prefLabel "Business (CCPA)"@en ;
+    skos:scopeNote "Narrower than PL-108 because of the thresholds: a small company may be a GDPR controller but not a CCPA business."@en ;
+    pl:definedIn pl:CCPA ;
+    pl:mappingStatus "check against statute text" .
+
+c:PL-110 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Digital Personal Data Protection Act, 2023"@en ;
+    skos:closeMatch c:PL-023 ;
+    skos:definition "Under India's DPDP Act, the person or organisation that determines the purpose and means of processing personal data."@en ;
+    skos:inScheme pl:RoleScheme ;
+    skos:notation "PL-110" ;
+    skos:prefLabel "Data Fiduciary (DPDP)"@en ;
+    pl:definedIn pl:DPDP ;
+    pl:mappingStatus "check against statute text" .
+
+c:PL-111 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "GDPR Article 4(1)"@en ;
+    skos:closeMatch c:PL-022 ;
+    skos:definition "Under GDPR, the identified or identifiable natural person whom personal data is about."@en ;
+    skos:inScheme pl:RoleScheme ;
+    skos:notation "PL-111" ;
+    skos:prefLabel "Data subject (GDPR)"@en ;
+    pl:definedIn pl:GDPR ;
+    pl:mappingStatus "check against statute text" .
+
+c:PL-112 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Cal. Civ. Code § 1798.140"@en ;
+    skos:altLabel "California consumer"@en ;
+    skos:closeMatch c:PL-022 ;
+    skos:definition "Under the CCPA, a natural person who is a California resident."@en ;
+    skos:inScheme pl:RoleScheme ;
+    skos:notation "PL-112" ;
+    skos:prefLabel "Consumer (CCPA)"@en ;
+    skos:scopeNote "Narrower than PL-111: limited to California residents."@en ;
+    pl:definedIn pl:CCPA ;
+    pl:mappingStatus "check against statute text" .
+
+c:PL-113 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Digital Personal Data Protection Act, 2023"@en ;
+    skos:closeMatch c:PL-022 ;
+    skos:definition "Under India's DPDP Act, the individual to whom the personal data relates."@en ;
+    skos:inScheme pl:RoleScheme ;
+    skos:notation "PL-113" ;
+    skos:prefLabel "Data Principal (DPDP)"@en ;
+    skos:scopeNote "Can include a parent or lawful guardian acting for a child; check the Act's definition."@en ;
+    pl:definedIn pl:DPDP ;
+    pl:mappingStatus "check against statute text" .
+
+pl:California a owl:NamedIndividual,
+        pl:Jurisdiction ;
+    rdfs:label "California"@en .
+
+pl:ControlScheme a skos:ConceptScheme ;
+    skos:hasTopConcept c:PL-019 ;
+    skos:prefLabel "Controls"@en .
+
+pl:DoesNot a owl:NamedIndividual,
+        pl:Certainty ;
+    rdfs:label "does not"@en .
+
+pl:EEA a owl:NamedIndividual,
+        pl:Jurisdiction ;
+    rdfs:label "European Economic Area"@en .
+
+pl:India a owl:NamedIndividual,
+        pl:Jurisdiction ;
+    rdfs:label "India"@en .
+
+pl:May a owl:NamedIndividual,
+        pl:Certainty ;
+    rdfs:label "may"@en .
+
+pl:Organisation a owl:Class ;
+    rdfs:label "Organisation"@en ;
+    rdfs:comment "A named company that receives data, such as a specific advertising network."@en .
+
+pl:example_flow_1 a pl:Flow ;
+    pl:concernsData c:PL-006 ;
+    pl:hasAction c:PL-014 ;
+    pl:hasCertainty pl:Does ;
+    pl:hasPurpose c:PL-012 ;
+    pl:supportedBy pl:example_flow_1_statement .
+
+pl:example_flow_1_statement a pl:Statement ;
+    pl:text "We use the content you post to train our AI models."^^xsd:string .
+
+pl:example_flow_2 a pl:Flow ;
+    pl:concernsData c:PL-006 ;
+    pl:hasAction c:PL-014 ;
+    pl:hasCertainty pl:DoesNot ;
+    pl:hasPurpose c:PL-012 ;
+    pl:supportedBy pl:example_flow_2_statement .
+
+pl:example_flow_2_statement a pl:Statement ;
+    pl:text "We do not use your messages to train AI models."^^xsd:string .
+
+pl:example_service a pl:Service ;
+    rdfs:label "ExampleApp (illustrative test data)"@en .
+
+c:PL-003 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber rider notice: collects precise location if allowed in phone settings"@en ;
+    skos:altLabel "GPS coordinates"@en,
+        "GPS location"@en,
+        "exact location"@en,
+        "precise geolocation"@en ;
+    skos:broader c:PL-002,
+        c:PL-105 ;
+    skos:closeMatch pd:GPSCoordinate ;
+    skos:definition "Location data accurate enough to identify a specific place, such as GPS coordinates from a device."@en ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:notation "PL-003" ;
+    skos:prefLabel "Precise location"@en ;
+    skos:scopeNote "Use only when the policy refers to exact or device-derived location; otherwise use PL-004."@en ;
+    pl:mappingStatus "verified" .
+
+c:PL-013 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber rider notice: 'For research and development'"@en ;
+    skos:altLabel "developing new features"@en,
+        "product development"@en,
+        "research"@en ;
+    skos:definition "The purpose of using data to research, develop, or improve products and services."@en ;
+    skos:exactMatch dpv:ResearchAndDevelopment ;
+    skos:inScheme pl:PurposeScheme ;
+    skos:narrower c:PL-012 ;
+    skos:notation "PL-013" ;
+    skos:prefLabel "Research and development"@en ;
+    skos:scopeNote "Use PL-012 instead when the policy explicitly refers to training models."@en ;
+    pl:mappingStatus "verified" .
+
+c:PL-015 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber US notice; Uber rider notice (data sharing and disclosure)"@en ;
+    skos:altLabel "disclose"@en,
+        "make available to"@en,
+        "provide to"@en,
+        "transfer to"@en ;
+    skos:definition "The action of a service making data available to another party."@en ;
+    skos:exactMatch dpv:Share ;
+    skos:inScheme pl:ActionScheme ;
+    skos:notation "PL-015" ;
+    skos:prefLabel "Share"@en ;
+    skos:scopeNote "General sense of making data available. For California's narrower legal meaning use Sharing (CCPA), PL-107."@en ;
+    pl:mappingStatus "to verify in DPV" .
+
+c:PL-016 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber US notice"@en ;
+    skos:altLabel "monetising data"@en,
+        "sale of data"@en,
+        "selling data"@en ;
+    skos:definition "The action of providing data to another party in exchange for payment or another benefit."@en ;
+    skos:inScheme pl:ActionScheme ;
+    skos:notation "PL-016" ;
+    skos:prefLabel "Sell"@en ;
+    skos:scopeNote "Legal meanings differ by law; for California's broader meaning use Sale (CCPA), PL-106."@en ;
+    pl:mappingStatus "own concept" .
+
+c:PL-017 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber rider notice (service providers and business partners)"@en ;
+    skos:altLabel "business partner"@en,
+        "external company"@en,
+        "partner"@en,
+        "vendor"@en ;
+    skos:definition "An organisation, other than the service and the person, that receives data from the service."@en ;
+    skos:exactMatch dpv:ThirdParty ;
+    skos:inScheme pl:RecipientScheme ;
+    skos:narrower c:PL-018 ;
+    skos:notation "PL-017" ;
+    skos:prefLabel "Third party"@en ;
+    skos:scopeNote "Excludes the service's own subsidiaries and affiliates."@en ;
+    pl:mappingStatus "to verify in DPV" .
+
+c:PL-020 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber US notice"@en ;
+    skos:altLabel "Do Not Sell or Share My Personal Information"@en,
+        "right to opt out"@en ;
+    skos:definition "A legal right under some US state laws, including the CCPA, to stop a business from selling or sharing one's personal information."@en ;
+    skos:inScheme pl:RightScheme ;
+    skos:notation "PL-020" ;
+    skos:prefLabel "Right to opt out of sale or sharing"@en ;
+    skos:scopeNote "A legal right, unlike PL-019, which is a control a service offers. Applies to Sale (CCPA) and Sharing (CCPA)."@en ;
+    pl:definedIn pl:CCPA ;
+    pl:mappingStatus "own concept (CCPA)" ;
+    pl:rightConcerns c:PL-106,
+        c:PL-107 .
+
+c:PL-021 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber rider notice (objections, restrictions and complaints)"@en ;
+    skos:altLabel "objection to processing"@en ;
+    skos:definition "A legal right under GDPR to object to the processing of one's personal data for certain purposes."@en ;
+    skos:inScheme pl:RightScheme ;
+    skos:notation "PL-021" ;
+    skos:note "Legal reference: GDPR Article 21"@en ;
+    skos:prefLabel "Right to object"@en ;
+    skos:scopeNote "Applies in the EEA, UK and Switzerland; link to the GDPR in the ontology stage."@en ;
+    pl:definedIn pl:GDPR ;
+    pl:mappingStatus "check DPV EU-GDPR extension for identifier" ;
+    pl:rightConcerns c:PL-011 .
+
+c:PL-105 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Cal. Civ. Code § 1798.140"@en ;
+    skos:altLabel "SPI"@en ;
+    skos:closeMatch c:PL-024 ;
+    skos:definition "Under the CCPA, a defined set of personal information needing extra protection, including precise geolocation."@en ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:narrower c:PL-003 ;
+    skos:notation "PL-105" ;
+    skos:prefLabel "Sensitive personal information (CCPA)"@en ;
+    skos:scopeNote "closeMatch PL-104 (GDPR); see the note there on how the lists differ. Links to Precise location (PL-003)."@en ;
+    pl:definedIn pl:CCPA ;
+    pl:mappingStatus "check against statute text" .
+
+c:PL-106 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Cal. Civ. Code § 1798.140; Uber US notice"@en ;
+    skos:altLabel "sell"@en,
+        "selling"@en ;
+    skos:definition "Under the CCPA, disclosing personal information to a third party for money or other valuable consideration."@en ;
+    skos:inScheme pl:ActionScheme ;
+    skos:narrowMatch c:PL-016 ;
+    skos:notation "PL-106" ;
+    skos:prefLabel "Sale (CCPA)"@en ;
+    skos:scopeNote "Broader than the everyday meaning of selling: 'other valuable consideration' can count, not only money."@en ;
+    pl:definedIn pl:CCPA ;
+    pl:mappingStatus "check against statute text" .
+
+c:PL-107 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Cal. Civ. Code § 1798.140; Uber US notice"@en ;
+    skos:altLabel "cross-context behavioral advertising"@en,
+        "share"@en ;
+    skos:definition "Under the CCPA, disclosing personal information to a third party for cross-context behavioral advertising."@en ;
+    skos:inScheme pl:ActionScheme ;
+    skos:narrowMatch c:PL-015 ;
+    skos:notation "PL-107" ;
+    skos:prefLabel "Sharing (CCPA)"@en ;
+    skos:scopeNote "Narrower than the everyday meaning of sharing: it applies only to that advertising purpose (PL-010)."@en ;
+    pl:definedIn pl:CCPA ;
+    pl:mappingStatus "check against statute text" .
+
+pl:Does a owl:NamedIndividual,
+        pl:Certainty ;
+    rdfs:label "does"@en .
+
+pl:RecipientScheme a skos:ConceptScheme ;
+    skos:hasTopConcept c:PL-017 ;
+    skos:prefLabel "Recipient categories"@en .
+
+pl:RightScheme a skos:ConceptScheme ;
+    skos:hasTopConcept c:PL-020,
+        c:PL-021 ;
+    skos:prefLabel "Rights"@en .
+
+pl:Service a owl:Class ;
+    rdfs:label "Service"@en ;
+    rdfs:comment "An online product or company whose privacy documents are analysed."@en .
+
+pl:hasCertainty a owl:ObjectProperty ;
+    rdfs:domain pl:Flow ;
+    rdfs:range pl:Certainty .
+
+pl:hasPurpose a owl:ObjectProperty ;
+    rdfs:domain pl:Flow .
+
+c:PL-002 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber rider notice (location data section)"@en ;
+    skos:altLabel "geolocation"@en,
+        "location"@en,
+        "location information"@en ;
+    skos:broader c:PL-001 ;
+    skos:definition "Personal data that describes where a person or their device is, at any level of accuracy."@en ;
+    skos:exactMatch pd:Location ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:narrower c:PL-003,
+        c:PL-004 ;
+    skos:notation "PL-002" ;
+    skos:prefLabel "Location data"@en ;
+    skos:scopeNote "Covers both precise and approximate location (PL-003, PL-004)."@en ;
+    pl:mappingStatus "verified" .
+
+c:PL-006 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Zoom terms s.10.1 (Customer Content); Uber rider notice (user content)"@en ;
+    skos:altLabel "customer content"@en,
+        "messages"@en,
+        "posts"@en,
+        "uploaded photos"@en,
+        "user-generated content"@en,
+        "your content"@en ;
+    skos:broader c:PL-001 ;
+    skos:definition "Content that a person creates, uploads, or sends through a service, such as posts, messages, photos, recordings, or files."@en ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:notation "PL-006" ;
+    skos:prefLabel "User content"@en ;
+    skos:scopeNote "Zoom's 'Customer Content' maps here. Keep separate from usage data (PL-008)."@en ;
+    pl:mappingStatus "own concept" .
+
+c:PL-011 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Uber rider notice (marketing and advertising)"@en ;
+    skos:altLabel "marketing emails"@en,
+        "promotional communications"@en,
+        "promotions"@en ;
+    skos:definition "The purpose of using data to promote a service's own or partners' products, other than by showing advertisements."@en ;
+    skos:exactMatch dpv:Marketing ;
+    skos:inScheme pl:PurposeScheme ;
+    skos:narrower c:PL-010 ;
+    skos:notation "PL-011" ;
+    skos:prefLabel "Marketing"@en ;
+    skos:scopeNote "In DPV, Advertising is a narrower kind of Marketing."@en ;
+    pl:mappingStatus "verified" .
+
+c:PL-014 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "All collected policies"@en ;
+    skos:altLabel "gather"@en,
+        "obtain"@en,
+        "receive"@en ;
+    skos:definition "The action of a service obtaining data from a person, their device, or another source."@en ;
+    skos:exactMatch dpv:Collect ;
+    skos:inScheme pl:ActionScheme ;
+    skos:notation "PL-014" ;
+    skos:prefLabel "Collect"@en ;
+    pl:mappingStatus "verified" .
+
+c:PL-024 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "DPV personal data taxonomy"@en ;
+    skos:altLabel "sensitive data"@en,
+        "sensitive information"@en ;
+    skos:broader c:PL-001 ;
+    skos:definition "Personal data that needs extra protection because its misuse could seriously harm the person."@en ;
+    skos:exactMatch dpv:SensitivePersonalData ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:notation "PL-024" ;
+    skos:prefLabel "Sensitive personal data"@en ;
+    skos:scopeNote "Laws disagree on what counts; compare PL-104 and PL-105."@en ;
+    pl:mappingStatus "verified" .
+
+pl:DPDP a owl:NamedIndividual,
+        pl:Law ;
+    rdfs:label "Digital Personal Data Protection Act, 2023"@en ;
+    pl:appliesIn pl:India .
+
+c:PL-022 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "DPV legal roles"@en ;
+    skos:altLabel "individual"@en,
+        "person"@en,
+        "user"@en,
+        "you"@en ;
+    skos:definition "The individual whom personal data is about."@en ;
+    skos:exactMatch dpv:DataSubject ;
+    skos:inScheme pl:RoleScheme ;
+    skos:notation "PL-022" ;
+    skos:prefLabel "Data subject"@en ;
+    skos:scopeNote "Each law has its own term for this role; see PL-111 to PL-113."@en ;
+    pl:mappingStatus "verified" .
+
+c:PL-023 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "DPV legal roles"@en ;
+    skos:altLabel "the company"@en,
+        "the organisation responsible"@en,
+        "us"@en,
+        "we"@en ;
+    skos:definition "The organisation that decides why and how personal data is processed."@en ;
+    skos:exactMatch dpv:DataController ;
+    skos:inScheme pl:RoleScheme ;
+    skos:notation "PL-023" ;
+    skos:prefLabel "Data controller"@en ;
+    skos:scopeNote "Each law has its own term for this role; see PL-108 to PL-110."@en ;
+    pl:mappingStatus "verified" .
+
+pl:Certainty a owl:Class ;
+    rdfs:label "Certainty"@en ;
+    rdfs:comment "How firmly a policy states a practice: does, may, or does not."@en .
+
+pl:Statement a owl:Class ;
+    rdfs:label "Statement"@en ;
+    rdfs:comment "The exact sentence from a policy that supports a flow."@en .
+
+c:PL-012 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Zoom terms s.10.2; Uber rider notice (research and development); Uber US notice (LLM training question)"@en ;
+    skos:altLabel "model improvement"@en,
+        "training AI models"@en,
+        "training large language models"@en,
+        "training machine learning models"@en ;
+    skos:broader c:PL-013 ;
+    skos:definition "The purpose of using data to train, fine-tune, or improve machine learning or artificial intelligence models."@en ;
+    skos:inScheme pl:PurposeScheme ;
+    skos:narrowMatch dpv:ResearchAndDevelopment ;
+    skos:notation "PL-012" ;
+    skos:prefLabel "AI model training"@en ;
+    skos:scopeNote "Tag only when the sentence mentions models, machine learning, or AI. Vague wording such as 'improve our services' alone goes to PL-013 or PL-009."@en ;
+    pl:mappingStatus "own concept" .
+
+pl:ActionScheme a skos:ConceptScheme ;
+    skos:hasTopConcept c:PL-014,
+        c:PL-015,
+        c:PL-016,
+        c:PL-106,
+        c:PL-107 ;
+    skos:prefLabel "Actions"@en .
+
+pl:GDPR a owl:NamedIndividual,
+        pl:Law ;
+    rdfs:label "General Data Protection Regulation"@en ;
+    pl:appliesIn pl:EEA ;
+    pl:grantsRight c:PL-021 .
+
+pl:Jurisdiction a owl:Class ;
+    rdfs:label "Jurisdiction"@en ;
+    rdfs:comment "A place where a law applies."@en .
+
+pl:PurposeScheme a skos:ConceptScheme ;
+    skos:hasTopConcept c:PL-009,
+        c:PL-011,
+        c:PL-013 ;
+    skos:prefLabel "Purposes"@en .
+
+pl:Law a owl:Class ;
+    rdfs:label "Law"@en ;
+    rdfs:comment "A privacy law."@en .
+
+pl:CCPA a owl:NamedIndividual,
+        pl:Law ;
+    rdfs:label "California Consumer Privacy Act"@en ;
+    pl:appliesIn pl:California ;
+    pl:grantsRight c:PL-020 .
+
+pl:Policy a owl:Class ;
+    rdfs:label "Policy"@en ;
+    rdfs:comment "One privacy document (policy, notice or terms) for one region, as collected."@en .
+
+pl:RoleScheme a skos:ConceptScheme ;
+    skos:hasTopConcept c:PL-022,
+        c:PL-023,
+        c:PL-108,
+        c:PL-109,
+        c:PL-110,
+        c:PL-111,
+        c:PL-112,
+        c:PL-113 ;
+    skos:prefLabel "Roles"@en .
+
+c:PL-001 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-21"^^xsd:date ;
+    dcterms:source "Used throughout all collected policies"@en ;
+    skos:altLabel "PII"@en,
+        "personal information"@en,
+        "personally identifiable information"@en,
+        "your information"@en ;
+    skos:definition "Data that relates to an identified or identifiable person."@en ;
+    skos:exactMatch dpv:PersonalData ;
+    skos:inScheme pl:DataTypeScheme ;
+    skos:narrower c:PL-002,
+        c:PL-005,
+        c:PL-006,
+        c:PL-007,
+        c:PL-008,
+        c:PL-024 ;
+    skos:notation "PL-001" ;
+    skos:prefLabel "Personal data"@en ;
+    skos:scopeNote "Includes data a policy calls non-personal or anonymous if this vocabulary classifies it as personal (see CQ14)."@en ;
+    pl:mappingStatus "verified" .
+
+pl:DataTypeScheme a skos:ConceptScheme ;
+    skos:hasTopConcept c:PL-001,
+        c:PL-101,
+        c:PL-102,
+        c:PL-103,
+        c:PL-104,
+        c:PL-105 ;
+    skos:prefLabel "Data types"@en .
+
+pl:Flow a owl:Class ;
+    rdfs:label "Flow"@en ;
+    rdfs:comment "One statement in a policy about collecting, sharing, selling or using a type of data."@en .
+

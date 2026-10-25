@@ -1,0 +1,7 @@
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX c: <https://privacylens.example.org/concept/>
+
+SELECT ?label WHERE {
+  ?term skos:broader+ c:PL-001 ;
+        skos:prefLabel ?label .
+}
