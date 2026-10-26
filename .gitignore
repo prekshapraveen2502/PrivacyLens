@@ -19,3 +19,6 @@ docs/*.png
 .DS_Store
 .vscode/
 .idea/
+
+data/extracted/*
+!data/extracted/runs.csv
