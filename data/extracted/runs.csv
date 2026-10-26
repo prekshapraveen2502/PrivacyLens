@@ -26,3 +26,4 @@ timestamp,document,model,chunks,accepted,rejected,input_tokens,output_tokens
 2026-10-26T00:45:43,x_privacy_policy_global.txt,gpt-5.4-mini,6,78,2,18365,7787
 2026-10-26T00:46:38,zoom_privacy_policy_global.txt,gpt-5.4-mini,10,92,14,30571,12678
 2026-10-26T00:47:04,zoom_terms_of_service_global.txt,gpt-5.4-mini,17,23,1,51910,3166
+2026-10-26T00:58:20,zoom_privacy_policy_global.txt,gpt-5.4-mini,10,141,2,30571,18146

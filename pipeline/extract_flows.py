@@ -149,12 +149,12 @@ def normalise(s):
 def quote_check(sentence, source_text):
     """Return None if the sentence is in the source, otherwise the reason it failed.
 
-    Ignores differences in whitespace, curly quotes, dash style, and trailing
-    punctuation; every word must still match exactly.
+    Ignores differences in whitespace, curly quotes, dash style, a leading bullet
+    marker and trailing punctuation; every word must still match exactly.
     """
     if not sentence or len(sentence.split()) < 3:
         return "source sentence missing or too short"
-    core = normalise(sentence).rstrip(" .;:,")
+    core = normalise(sentence).lstrip("-*\u2022\u00b7\u25aa ").rstrip(" .;:,")
     if core not in normalise(source_text):
         return "source sentence not found in policy text"
     return None
