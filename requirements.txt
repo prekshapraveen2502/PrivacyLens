@@ -6,3 +6,4 @@ rdflib
 pyshacl
 pydantic
 anthropic
+openai

@@ -271,6 +271,22 @@ c:PL-019 a owl:NamedIndividual,
     skos:scopeNote "Record what the opt-out applies to (for example, AI model training or advertising)."@en ;
     pl:mappingStatus "own concept" .
 
+c:PL-025 a owl:NamedIndividual,
+        skos:Concept ;
+    dcterms:created "2026-10-25"^^xsd:date ;
+    dcterms:source "Uber rider notice; Zoom terms s.10.2"@en ;
+    skos:altLabel "analyse"@en,
+        "process"@en,
+        "use for"@en,
+        "utilise"@en ;
+    skos:definition "The action of a service applying data for one of its own purposes, such as providing the service, advertising, or training AI models."@en ;
+    skos:exactMatch dpv:Use ;
+    skos:inScheme pl:ActionScheme ;
+    skos:notation "PL-025" ;
+    skos:prefLabel "Use"@en ;
+    skos:scopeNote "Use when a policy says what data is used for, without collecting or disclosing it in that sentence."@en ;
+    pl:mappingStatus "to verify in DPV" .
+
 c:PL-101 a owl:NamedIndividual,
         skos:Concept ;
     dcterms:created "2026-10-21"^^xsd:date ;
@@ -718,14 +734,6 @@ pl:Certainty a owl:Class ;
     rdfs:label "Certainty"@en ;
     rdfs:comment "How firmly a policy states a practice: does, may, or does not."@en .
 
-pl:ActionScheme a skos:ConceptScheme ;
-    skos:hasTopConcept c:PL-014,
-        c:PL-015,
-        c:PL-016,
-        c:PL-106,
-        c:PL-107 ;
-    skos:prefLabel "Actions"@en .
-
 pl:GDPR a owl:NamedIndividual,
         pl:Law ;
     rdfs:label "General Data Protection Regulation"@en ;
@@ -741,6 +749,15 @@ pl:PurposeScheme a skos:ConceptScheme ;
         c:PL-011,
         c:PL-013 ;
     skos:prefLabel "Purposes"@en .
+
+pl:ActionScheme a skos:ConceptScheme ;
+    skos:hasTopConcept c:PL-014,
+        c:PL-015,
+        c:PL-016,
+        c:PL-025,
+        c:PL-106,
+        c:PL-107 ;
+    skos:prefLabel "Actions"@en .
 
 pl:Law a owl:Class ;
     rdfs:label "Law"@en ;
