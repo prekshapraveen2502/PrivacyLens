@@ -19,3 +19,7 @@ docs/*.png
 .DS_Store
 .vscode/
 .idea/
+
+# Extracted records (they quote policy text); keep the run log
+data/extracted/*
+!data/extracted/runs.csv
