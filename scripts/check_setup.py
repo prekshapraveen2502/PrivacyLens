@@ -49,14 +49,13 @@ def check_graphdb():
 
 
 def check_llm():
-    import anthropic
-    client = anthropic.Anthropic()
-    msg = client.messages.create(
-        model=os.getenv("LLM_MODEL", "claude-sonnet-5"),
-        max_tokens=20,
-        messages=[{"role": "user", "content": "Reply with the single word: ready"}],
+    from openai import OpenAI
+    client = OpenAI()
+    response = client.responses.create(
+        model=os.getenv("OPENAI_MODEL", "gpt-5.4-mini"),
+        input="Reply with the single word: ready",
     )
-    print("  LLM API:", msg.content[0].text.strip())
+    print("  LLM API:", response.output_text.strip())
 
 
 if __name__ == "__main__":
