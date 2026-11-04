@@ -14,6 +14,8 @@ Consistency: whether a question gets the same verdict on every run.
 Usage (Neo4j and GraphDB running):
     python eval/eval_agent.py                    # all questions, 2 runs each
     python eval/eval_agent.py --runs 1 --only Q01,Q11
+    python eval/eval_agent.py --rescore eval/results/<file>.jsonl            # re-check grounding
+    python eval/eval_agent.py --rescore eval/results/<file>.jsonl --rejudge  # and re-judge
 Full answers and tool calls are saved to eval/results/ (git-ignored: answers quote policies).
 """
 import argparse
@@ -39,12 +41,20 @@ def normalise(s):
     return re.sub(r"\s+", " ", s.translate(QUOTE_MAP)).strip().lower()
 
 
+def grounding_key(s):
+    """Letters and digits only: ignores spacing, punctuation and quote-style differences,
+    including words that are merged in the stored policy text (e.g. "toimprove")."""
+    s = re.sub(r"\(opens in a new window\)", "", s, flags=re.I)   # link text left in scraped pages
+    return re.sub(r"[^a-z0-9]", "", s.lower())
+
+
 # ---------------------------------------------------------------- automatic scores
 
 def quoted_fragments(answer):
     """Text the agent presents as quotation, split at ellipses into checkable fragments."""
     quotes = re.findall(r"[\u201c\"]([^\u201c\u201d\"]{20,}?)[\u201d\"]", answer)
-    quotes += [line.lstrip("> ").strip() for line in answer.splitlines() if line.startswith(">")]
+    quotes += [line.lstrip("> ").strip() for line in answer.splitlines()
+               if line.startswith(">") and not re.match(r"^>\s*[\u2014\u2013-]", line)]   # skip "> — Source"
     fragments = []
     for q in quotes:
         for part in re.split(r"\s*(?:\u2026|\.\.\.)\s*", q):
@@ -56,7 +66,7 @@ def quoted_fragments(answer):
 
 def grounding(answer, corpus):
     fragments = quoted_fragments(answer)
-    ungrounded = [f for f in fragments if normalise(f) not in corpus]
+    ungrounded = [f for f in fragments if grounding_key(f) not in corpus]
     return len(fragments), ungrounded
 
 
@@ -117,14 +127,73 @@ def load_agent():
 def statement_corpus():
     import tools
     rows = tools._cypher_read("MATCH (s:Statement) RETURN s.text AS text")
-    return "\n".join(normalise(r["text"]) for r in rows)
+    return "|".join(grounding_key(r["text"]) for r in rows)
+
+
+def summarize(rows, items, runs):
+    # Summary
+    print("\n" + "=" * 78 + "\nSUMMARY\n" + "=" * 78)
+    verdicts = Counter(r["verdict"] for r in rows)
+    total = len(rows)
+    print(f"Answers: {total}  ({len(items)} questions x {runs} runs)")
+    for v in ("correct", "partial", "incorrect"):
+        print(f"  {v:10s} {verdicts[v]:3d}  ({verdicts[v] / total:.0%})")
+    by_type = {}
+    for r in rows:
+        by_type.setdefault(r["type"], []).append(r["verdict"] == "correct")
+    for t, ok in sorted(by_type.items()):
+        print(f"  correct on {t} questions: {sum(ok)}/{len(ok)}")
+    quotes = sum(r["quotes"] for r in rows)
+    bad = sum(len(r["ungrounded_quotes"]) for r in rows)
+    print(f"Quoted fragments grounded in the graph: {quotes - bad}/{quotes}")
+    print(f"Answers missing a required mention: {sum(1 for r in rows if r['missing_mentions'])}/{total}")
+    if runs > 1:
+        same = [len({r['verdict'] for r in rows if r['id'] == i['id']}) == 1 for i in items]
+        print(f"Same verdict on every run: {sum(same)}/{len(items)} questions")
+    print("\nPer question (verdict on each run):")
+    for i in items:
+        vs = [r["verdict"] for r in rows if r["id"] == i["id"]]
+        print(f"  {i['id']} {i['type']:7s} {' / '.join(vs)}")
+
+
+def rescore(path, rejudge):
+    """Re-check grounding, and optionally re-judge, the answers saved in a results file."""
+    items = {i["id"]: i for i in json.loads(EVAL_SET.read_text(encoding="utf-8"))}
+    rows = [json.loads(line) for line in path.open(encoding="utf-8") if line.strip()]
+    corpus = statement_corpus()
+    judge = None
+    if rejudge:
+        from openai import OpenAI
+        model = os.getenv("OPENAI_JUDGE_MODEL") or os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
+        judge = build_judge(OpenAI(), model)
+        print(f"Re-judging {len(rows)} answers with {model}")
+    for r in rows:
+        item = items[r["id"]]
+        r["quotes"], r["ungrounded_quotes"] = grounding(r["answer"], corpus)
+        r["missing_mentions"] = mentions(r["answer"], item.get("must_mention", []))
+        if judge:
+            r["judge"] = judge(item, r["answer"])
+            r["verdict"] = r["judge"]["verdict"]
+    out_path = path.with_name(path.stem + f"_rescored_{datetime.now():%Y%m%d_%H%M%S}.jsonl")
+    with out_path.open("w", encoding="utf-8") as out:
+        for r in rows:
+            out.write(json.dumps(r, ensure_ascii=False) + "\n")
+    asked = [items[i] for i in dict.fromkeys(r["id"] for r in rows)]
+    summarize(rows, asked, max(r["run"] for r in rows))
+    print(f"\nRe-scored results: {out_path.relative_to(ROOT)}")
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--runs", type=int, default=2, help="answers per question")
     parser.add_argument("--only", help="comma-separated question ids, e.g. Q01,Q11")
+    parser.add_argument("--rescore", metavar="RESULTS_FILE",
+                        help="re-score saved answers instead of running the agent")
+    parser.add_argument("--rejudge", action="store_true",
+                        help="with --rescore: also re-run the judge (uses OPENAI_JUDGE_MODEL)")
     args = parser.parse_args()
+    if args.rescore:
+        return rescore(Path(args.rescore), args.rejudge)
 
     from openai import OpenAI
     agent = load_agent()
@@ -157,29 +226,7 @@ def main():
                 print(f"    -> {verdict['verdict']}; quotes {n_quotes - len(ungrounded)}/{n_quotes} grounded; "
                       f"missing mentions: {missing or 'none'}")
 
-    # Summary
-    print("\n" + "=" * 78 + "\nSUMMARY\n" + "=" * 78)
-    verdicts = Counter(r["verdict"] for r in rows)
-    total = len(rows)
-    print(f"Answers: {total}  ({len(items)} questions x {args.runs} runs)")
-    for v in ("correct", "partial", "incorrect"):
-        print(f"  {v:10s} {verdicts[v]:3d}  ({verdicts[v] / total:.0%})")
-    by_type = {}
-    for r in rows:
-        by_type.setdefault(r["type"], []).append(r["verdict"] == "correct")
-    for t, ok in sorted(by_type.items()):
-        print(f"  correct on {t} questions: {sum(ok)}/{len(ok)}")
-    quotes = sum(r["quotes"] for r in rows)
-    bad = sum(len(r["ungrounded_quotes"]) for r in rows)
-    print(f"Quoted fragments grounded in the graph: {quotes - bad}/{quotes}")
-    print(f"Answers missing a required mention: {sum(1 for r in rows if r['missing_mentions'])}/{total}")
-    if args.runs > 1:
-        same = [len({r['verdict'] for r in rows if r['id'] == i['id']}) == 1 for i in items]
-        print(f"Same verdict on every run: {sum(same)}/{len(items)} questions")
-    print("\nPer question (verdict on each run):")
-    for i in items:
-        vs = [r["verdict"] for r in rows if r["id"] == i["id"]]
-        print(f"  {i['id']} {i['type']:7s} {' / '.join(vs)}")
+    summarize(rows, items, args.runs)
     print(f"\nFull answers, tool calls and judge reasons: {out_path.relative_to(ROOT)}")
 
 

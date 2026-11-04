@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 MODEL = os.getenv("OPENAI_AGENT_MODEL", os.getenv("OPENAI_MODEL", "gpt-5.4-mini"))
 MAX_STEPS = 8
-MAX_TOOL_OUTPUT = 12000      # characters of tool output sent back to the LLM
+MAX_TOOL_OUTPUT = 30000      # characters of tool output sent back to the LLM
 
 INSTRUCTIONS = """You answer questions about what companies' privacy policies say, using ONLY
 the PrivacyLens knowledge graph through the tools provided. Never answer from your own
@@ -41,13 +41,20 @@ How to work:
   ones (e.g. all kinds of location data) before filtering flows.
 - Use find_flows to get data practices with their exact source sentences. Leave out
   service_id to search every service in one call; use list_services for service ids.
-- Only set filters the question needs. In particular:
-  * Results include every certainty. For "does X do Y?" questions a "does_not" result
-    IS the answer ("No: the policy says it does not ...").
-  * Do not filter by action unless the question is specifically about collecting,
-    sharing or selling. Uses such as AI training are usually action PL-025 Use.
+  If a service is not in the graph, say that PrivacyLens does not cover it.
+- Only set filters the question needs. Results include every action and certainty:
+  read them. For "does X do Y?" questions a "does_not" result IS the answer ("No: the
+  policy says it does not ..."). For questions about sharing or selling data with
+  others, set disclosure_only to true.
+- If a result says it was TRUNCATED, results are missing: search again more narrowly
+  (e.g. one service at a time) before answering.
 - If find_concept finds nothing for the user's words, try a more general word (e.g.
   "content", "location"), or search without the data filter and read the sentences.
+- When reporting several services, say which ones state a practice ("does") and which
+  say they may do it ("may").
+- Answer the question that was asked. If you find closely related facts (e.g. a service
+  that uses data in the way asked about but does not share it), you may add them in a
+  separate, clearly labeled note; never mix them into the main answer.
 - For jurisdiction questions (e.g. "I live in California"), use laws_and_rights and
   broader_terms (which shows law-specific categories, e.g. sensitive under the CCPA).
 - Use run_cypher only when the other tools can't answer; call graph_schema first.
@@ -70,8 +77,12 @@ ID_LIST = {"type": "array", "items": {"type": "string"},
            "description": "Concept IDs such as PL-003"}
 TOOL_SPECS = [
     {"name": "find_concept",
-     "description": "Find vocabulary concepts whose label or alternative wording contains the text.",
-     "parameters": {"type": "object", "properties": {"text": {"type": "string"}},
+     "description": ("Find general vocabulary concepts whose label or alternative wording matches "
+                     "the text. Set include_law_terms to also get law-specific terms (for questions "
+                     "about how a law defines something); data practices never use those."),
+     "parameters": {"type": "object", "properties": {
+         "text": {"type": "string"},
+         "include_law_terms": {"type": "boolean"}},
                     "required": ["text"]}},
     {"name": "concepts_under",
      "description": "A concept and every concept below it in the hierarchy.",
@@ -88,17 +99,19 @@ TOOL_SPECS = [
      "description": "Services in the corpus (with their ids) and their documents.",
      "parameters": {"type": "object", "properties": {}}},
     {"name": "find_flows",
-     "description": ("Data practices matching the filters, each with its exact source sentence "
-                     "and its certainty (does / may / does_not). Results include every certainty, "
-                     "including denials. All filters are optional; expand concepts with "
-                     "concepts_under first."),
+     "description": ("Data practices matching the filters, each with its exact source sentence, "
+                     "its action (collect / share / sell / use) and its certainty (does / may / "
+                     "does_not). Results include every action and certainty, including denials. "
+                     "Filters are optional; data, purpose and recipient concepts automatically "
+                     "include everything below them. An unknown service_id returns an error."),
      "parameters": {"type": "object", "properties": {
          "service_id": {"type": "string", "description": "e.g. 'zoom'"},
-         "action_ids": {**ID_LIST, "description": "PL-014 Collect, PL-015 Share, PL-016 Sell, PL-025 Use"},
          "data_ids": ID_LIST,
          "purpose_ids": ID_LIST,
          "recipient_ids": ID_LIST,
-         "limit": {"type": "integer", "description": "max rows (default 25)"}}}},
+         "disclosure_only": {"type": "boolean",
+                             "description": "true = only practices where data is shared with or sold to others"},
+         "limit": {"type": "integer", "description": "max rows (default 25, max 50)"}}}},
     {"name": "run_cypher",
      "description": "Run a read-only Cypher query on the Neo4j graph. Call graph_schema first.",
      "parameters": {"type": "object", "properties": {"query": {"type": "string"}},
@@ -119,7 +132,8 @@ def run_tool(name, arguments):
     except Exception as e:
         text = json.dumps({"error": f"{type(e).__name__}: {e}"})
     if len(text) > MAX_TOOL_OUTPUT:
-        text = text[:MAX_TOOL_OUTPUT] + ' ... [truncated: narrow the filters]'
+        text = (text[:MAX_TOOL_OUTPUT] + ' ... [TRUNCATED: some results are missing. '
+                'Narrow the filters or search one service at a time before answering.]')
     return text
 
 

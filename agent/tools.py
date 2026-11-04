@@ -77,14 +77,15 @@ def _check_id(concept_id):
 def _all_concepts():
     """Every vocabulary concept with its labels and definition (cached; the vocabulary is small)."""
     rows = _sparql('''
-        SELECT ?id ?label ?scheme ?definition (GROUP_CONCAT(DISTINCT ?alt; separator="; ") AS ?also_called)
+        SELECT ?id ?label ?scheme ?definition ?law (GROUP_CONCAT(DISTINCT ?alt; separator="; ") AS ?also_called)
         WHERE {
           ?c skos:notation ?id ; skos:prefLabel ?label .
           OPTIONAL { ?c skos:inScheme/skos:prefLabel ?scheme }
           OPTIONAL { ?c skos:definition ?definition }
           OPTIONAL { ?c skos:altLabel ?alt }
+          OPTIONAL { ?c pl:definedIn/rdfs:label ?law }
         }
-        GROUP BY ?id ?label ?scheme ?definition ORDER BY ?id''')
+        GROUP BY ?id ?label ?scheme ?definition ?law ORDER BY ?id''')
     return tuple(rows)
 
 
@@ -92,14 +93,18 @@ def _whole_words(phrase):
     return re.compile(r"\b" + r"\s+".join(map(re.escape, phrase.lower().split())) + r"\b")
 
 
-def find_concept(text):
+def find_concept(text, include_law_terms=False):
     """Vocabulary concepts matching `text` as whole words.
+
+    By default only general concepts are returned: data practices in the graph always use
+    general concepts. Law-specific terms (e.g. "Special categories of personal data
+    (GDPR)") are included only with include_law_terms=True.
 
     First looks for the phrase in preferred and alternative labels; if nothing matches,
     looks for all of its words in labels and definitions. "AI" therefore no longer matches
     inside words such as "details" or "email".
     """
-    concepts = _all_concepts()
+    concepts = [c for c in _all_concepts() if include_law_terms or not c.get("law")]
     phrase = _whole_words(text)
     hits = [c for c in concepts
             if phrase.search(c["label"].lower()) or phrase.search(c.get("also_called", "").lower())]
@@ -108,7 +113,8 @@ def find_concept(text):
         hits = [c for c in concepts if words and all(
             w.search(" ".join([c["label"], c.get("also_called", ""), c.get("definition", "")]).lower())
             for w in words)]
-    return [{k: c.get(k, "") for k in ("id", "label", "scheme", "also_called")} for c in hits][:MAX_ROWS]
+    keys = ("id", "label", "scheme", "also_called", "law")
+    return [{k: c.get(k, "") for k in keys if c.get(k)} for c in hits][:MAX_ROWS]
 
 
 def concepts_under(concept_id):
@@ -154,20 +160,52 @@ def list_services():
         ORDER BY service''')
 
 
+@lru_cache(maxsize=1)
+def _service_ids():
+    return tuple(r["service_id"] for r in list_services())
+
+
+def _expand(ids):
+    """The concepts and everything below them in the hierarchy (asked of GraphDB)."""
+    if not ids:
+        return ids
+    expanded = set()
+    for i in ids:
+        expanded |= {r["id"] for r in concepts_under(i)}
+    return sorted(expanded)
+
+
+DISCLOSURE_ACTIONS = ["PL-015", "PL-016"]   # Share, Sell
+
+
+def _compact(row):
+    """Drop empty fields so more results fit in what the LLM can read."""
+    return {k: v for k, v in row.items() if v not in (None, "", [])}
+
+
 def find_flows(service_id=None, action_ids=None, data_ids=None, purpose_ids=None,
-               recipient_ids=None, certainty=None, limit=25):
+               recipient_ids=None, certainty=None, disclosure_only=False, limit=25):
     """Data practices matching the filters, each with its exact source sentence.
 
-    All filters are optional. Use concept IDs (e.g. data_ids=["PL-003"]); to include
-    narrower concepts, expand them first with concepts_under().
+    All filters are optional. Data, purpose and recipient concepts are expanded to include
+    everything below them in the hierarchy, so data_ids=["PL-002"] also finds precise and
+    approximate location. An unknown service_id is an error that lists the known services.
+    disclosure_only=True keeps only practices where data is shared with or sold to others.
+    Results are ordered by service and document, with empty fields left out.
     """
     # Empty lists or strings mean "no filter" (the LLM often sends [] for unused filters).
     action_ids, data_ids, purpose_ids, recipient_ids = (
         ids or None for ids in (action_ids, data_ids, purpose_ids, recipient_ids))
     service_id, certainty = service_id or None, certainty or None
+    if disclosure_only:
+        action_ids = DISCLOSURE_ACTIONS
     for ids in (action_ids, data_ids, purpose_ids, recipient_ids):
         for i in ids or []:
             _check_id(i)
+    if service_id and service_id not in _service_ids():
+        raise ValueError(f"Service {service_id!r} is not in the PrivacyLens graph. "
+                         f"Services covered: {', '.join(_service_ids())}.")
+    data_ids, purpose_ids, recipient_ids = map(_expand, (data_ids, purpose_ids, recipient_ids))
     rows = _cypher_read('''
         MATCH (s:Service)-[:PUBLISHES]->(p:Policy)-[:HAS_FLOW]->(f:Flow)
         WHERE ($service_id IS NULL OR s.id = $service_id)
@@ -191,10 +229,11 @@ def find_flows(service_id=None, action_ids=None, data_ids=None, purpose_ids=None
                f.certainty AS certainty, f.optOut AS opt_out,
                f.excludedRegions AS excluded_regions, f.reviewFlags AS review_flags,
                st.text AS sentence
+        ORDER BY service, document
         LIMIT $limit''', service_id=service_id, action_ids=action_ids, data_ids=data_ids,
         purpose_ids=purpose_ids, recipient_ids=recipient_ids, certainty=certainty,
         limit=min(int(limit), MAX_ROWS))
-    return rows
+    return [_compact(r) for r in rows]
 
 
 WRITE_WORDS = re.compile(
