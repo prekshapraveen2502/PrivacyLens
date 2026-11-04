@@ -73,12 +73,14 @@ def cq1(db, args):
     MATCH (f)-[:OF_DATA]->(d:Concept)
     RETURN s.name AS service, p.region AS region, f.certainty AS certainty,
            f.optOut AS opt_out, count(DISTINCT f) AS flows,
+           count(DISTINCT CASE WHEN f.llmCertainty <> f.certainty THEN f END) AS corrected,
+           count(DISTINCT CASE WHEN any(x IN coalesce(f.reviewFlags, []) WHERE NOT x STARTS WITH 'corrected') THEN f END) AS to_review,
            collect(DISTINCT d.label)[0..3] AS data_types
     ORDER BY service, region, certainty
     """
     explain("Cypher (Neo4j)", q, args.explain)
     rows, _, _ = db.execute_query(q)
-    show([r.data() for r in rows], ["service", "region", "certainty", "opt_out", "flows", "data_types"])
+    show([r.data() for r in rows], ["service", "region", "certainty", "opt_out", "flows", "corrected", "to_review", "data_types"])
 
 
 def cq3(db, args):

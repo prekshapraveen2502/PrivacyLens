@@ -29,6 +29,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from certainty_rules import apply as apply_certainty_rules
+
 ROOT = Path(__file__).resolve().parent.parent
 POLICY_DIR = ROOT / "data" / "policies"
 OUT_DIR = ROOT / "data" / "extracted"
@@ -85,8 +87,12 @@ Rules:
 3. data_phrase is the policy's own wording for the data (for example "GPS coordinates").
 4. certainty: "does" for definite statements, "may" for possible ones ("may", "can",
    "from time to time"), "does_not" for denials ("we do not sell").
-5. Purpose = AI model training ONLY when the sentence mentions models, machine learning or
-   artificial intelligence. "Improve our services" alone is not AI training.
+5. Purpose = AI model training ONLY when the text says data is used to train, fine-tune
+   or improve machine learning or AI models or algorithms. This includes third parties
+   that use the data to train THEIR OWN models (also set the recipient). Using AI tools or
+   AI features to process data is NOT AI training (usually service provision), and sharing
+   data with a vendor that provides AI tools to the company is a recipient, not AI
+   training. "Improve our services" alone is not AI training.
 6. opt_out: "yes" if the text says the person can opt out of or turn off this specific
    practice, "no" if it says they cannot, otherwise "not_stated".
 7. excluded_regions: regions where the text says this practice does NOT happen (for example
@@ -235,6 +241,7 @@ def extract_document(client, model, schema, system, path, max_chunks):
                 record["rejected_because"] = reason
                 rejected.append(record)
             else:
+                apply_certainty_rules(record)
                 accepted.append(record)
     return accepted, rejected, tokens_in, tokens_out, len(chunks)
 
@@ -293,8 +300,10 @@ def main():
         log_run({"timestamp": datetime.now().isoformat(timespec="seconds"), "document": path.name,
                  "model": model, "chunks": n_chunks, "accepted": len(accepted),
                  "rejected": len(rejected), "input_tokens": t_in, "output_tokens": t_out})
-        print(f"  {len(accepted)} accepted, {len(rejected)} rejected by quote check; "
-              f"tokens in/out: {t_in}/{t_out}")
+        corrected = sum(1 for r in accepted if r["certainty"] != r["llm_certainty"])
+        flagged = sum(1 for r in accepted if any(not f.startswith("corrected") for f in r["review_flags"]))
+        print(f"  {len(accepted)} accepted, {len(rejected)} rejected by quote check; certainty: "
+              f"{corrected} corrected, {flagged} flagged for review; tokens in/out: {t_in}/{t_out}")
 
 
 if __name__ == "__main__":
