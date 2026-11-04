@@ -103,6 +103,11 @@ Rules:
 10. Do not create records for descriptions of the person's rights or how to exercise them
    ("you may request...", "you have the right to..."). Only extract what the company itself
    does with data.
+11. When a sentence refers back to something described earlier in the text ("these
+   intermediaries", "such partners", "this information"), use that earlier description to
+   choose the recipient category, data type and purpose. For example, if an earlier line
+   introduces "Ad intermediaries", a later sentence that shares data "with these
+   intermediaries" has recipient = advertising partner and purpose = advertising.
 """
 
 

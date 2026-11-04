@@ -177,6 +177,22 @@ Every fix below was found by checking real output, then measured again.
 - Lesson: separate the expensive, variable step (the LLM) from the cheap, deterministic
   step (the rules), and measure variation instead of assuming outputs are stable.
 
+**5. Some practices are spread across sentences.**
+- CQ3 (location shared for advertising) returned nothing. Searching the original text
+  (`scripts/search_policies.py`) found one sentence that should answer it: Uber shares
+  approximate location "with these intermediaries".
+- The sentence was in the graph, but with purpose = service provision and recipient =
+  third party. The word that makes it about advertising, "Ad intermediaries", is in the
+  previous sentence.
+- This is the problem PoliGraph was designed to solve: earlier tools read policies one
+  sentence at a time, but a practice is often described across several.
+- Fix: a prompt rule telling the model to use earlier context for phrases like "these
+  intermediaries". Tested on Uber's policy only; CQ3 now returns Uber sharing approximate
+  location for advertising, with an opt-out.
+
+**Recall against the source text:** of 18 sentences that clearly state an AI-training
+practice, 15 were extracted (~83%); the other 3 are all flagged by the backstop rule.
+
 **Current baseline:** 13 documents from 8 services; 1,326 accepted records (57 rejected
 by the quote check); 1,202 flows in Neo4j; 38 vocabulary concepts.
 
