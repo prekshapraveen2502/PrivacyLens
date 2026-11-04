@@ -13,7 +13,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from certainty_rules import apply
+from certainty_rules import apply, flag_missed_ai_training
 
 ROOT = Path(__file__).resolve().parent.parent
 EXTRACTED = ROOT / "data" / "extracted"
@@ -27,6 +27,8 @@ def main():
         records = [json.loads(line) for line in path.open(encoding="utf-8") if line.strip()]
         for r in records:
             apply(r)
+        totals["possible missed AI training (sentences)"] += flag_missed_ai_training(records)
+        for r in records:
             totals["records"] += 1
             if r["certainty"] != r["llm_certainty"]:
                 totals["corrected"] += 1
@@ -39,6 +41,8 @@ def main():
     print(f"Records checked: {totals['records']}")
     print(f"Certainty corrected (does -> may): {totals['corrected']}")
     print(f"Still flagged for review: {totals['still flagged']}")
+    print(f"Sentences flagged as possible missed AI training: "
+          f"{totals['possible missed AI training (sentences)']}")
 
 
 if __name__ == "__main__":
