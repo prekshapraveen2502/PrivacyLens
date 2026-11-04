@@ -665,8 +665,9 @@ c:PL-012 a owl:NamedIndividual,
         skos:Concept ;
     dcterms:created "2026-10-21"^^xsd:date ;
     dcterms:source "Zoom terms s.10.2; Uber rider notice (research and development); Uber US notice (LLM training question)"@en ;
-    skos:altLabel "model improvement"@en,
+    skos:altLabel "fine-tuning models"@en,
         "training AI models"@en,
+        "training algorithms"@en,
         "training large language models"@en,
         "training machine learning models"@en ;
     skos:broader c:PL-013 ;
@@ -675,7 +676,7 @@ c:PL-012 a owl:NamedIndividual,
     skos:narrowMatch dpv:ResearchAndDevelopment ;
     skos:notation "PL-012" ;
     skos:prefLabel "AI model training"@en ;
-    skos:scopeNote "Tag only when the sentence mentions models, machine learning, or AI. Vague wording such as 'improve our services' alone goes to PL-013 or PL-009."@en ;
+    skos:scopeNote "Tag when the text says data is used to train, fine-tune or improve machine learning or AI models or algorithms, including by third parties training their own models. Using AI tools or AI features to process data is not AI model training (usually PL-009), and sharing data with a vendor that provides AI tools is a recipient, not this purpose. Vague wording such as 'improve our services' alone goes to PL-013 or PL-009."@en ;
     pl:mappingStatus "own concept" .
 
 c:PL-024 a owl:NamedIndividual,

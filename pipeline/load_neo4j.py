@@ -19,6 +19,7 @@ stores can be joined.
 
 Duplicate records (same policy, action, data type, purpose, recipient, certainty and
 sentence) are merged into one Flow; their different wordings all become LocalTerms.
+Each Flow keeps the certainty-check flags from extraction in f.reviewFlags (empty if none).
 
 Usage:
     python pipeline/load_neo4j.py           # load (safe to re-run; merges, never duplicates)
@@ -72,12 +73,15 @@ def load_flows():
                 "data_type": r["data_type"], "purpose": r["purpose"],
                 "recipient_category": r["recipient_category"],
                 "recipient_name": r["recipient_name"], "certainty": r["certainty"],
+                "llm_certainty": r.get("llm_certainty", r["certainty"]),
                 "opt_out": r["opt_out"], "excluded_regions": r["excluded_regions"],
-                "sentence": r["source_sentence"], "phrases": set()})
+                "sentence": r["source_sentence"], "phrases": set(), "review_flags": set()})
             if r.get("data_phrase"):
                 f["phrases"].add(r["data_phrase"].strip())
+            f["review_flags"].update(r.get("review_flags") or [])
     for f in flows.values():
         f["phrases"] = sorted(f["phrases"])
+        f["review_flags"] = sorted(f["review_flags"])
     return list(flows.values())
 
 
@@ -111,7 +115,8 @@ UNWIND $rows AS row
 MATCH (p:Policy {id: row.document})
 MERGE (f:Flow {id: row.id})
 SET f.certainty = row.certainty, f.optOut = row.opt_out,
-    f.excludedRegions = row.excluded_regions
+    f.excludedRegions = row.excluded_regions, f.reviewFlags = row.review_flags,
+    f.llmCertainty = row.llm_certainty
 MERGE (p)-[:HAS_FLOW]->(f)
 WITH f, row, p
 MATCH (a:Concept {id: row.action})    MERGE (f)-[:HAS_ACTION]->(a)

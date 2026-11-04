@@ -135,3 +135,69 @@ information").
 They drive the ontology design, and once the graph exists they become its test suite.
 
 **Files:** `eval/run_cqs.py` (run with `--explain` to see the queries)
+
+---
+
+## Step 7: Evaluating and fixing extraction (November 3–4)
+
+Every fix below was found by checking real output, then measured again.
+
+**1. The AI-training definition was too loose.**
+- Spot check: 3 of 8 AI-training flows were wrong, all in the same way. Sentences about
+  *using* AI tools, or sharing data with AI vendors, were tagged as AI model training.
+- Cause: the scope note for PL-012 only required the sentence to *mention* AI.
+- Fix: tightened the definition in the vocabulary and the matching prompt rule.
+- After: purpose correct on 24 of 25 AI-training records; purpose and certainty both
+  correct on 21 of 25; about 18 of 20 training sentences in the graph were found.
+- Lesson: **definitions are context engineering.** The words in the vocabulary directly
+  control what the LLM extracts.
+
+**2. Two kinds of AI training were missed.**
+- X shares data with recipients who may train *their own* AI models; Meta trains
+  "algorithms". Both were refined into the definition.
+
+**3. The LLM labels "may" as "does".**
+- Many sentences saying the company *may* do something were labeled as definite.
+- Fix: rule-based checks (`pipeline/certainty_rules.py`). A "does" label on a sentence
+  saying may/might/could is corrected to "may"; the LLM's original label is kept in
+  `llm_certainty`. Other mismatches are flagged for review, not changed.
+- The first version of the rules also treated "can" and "no longer" as signals; reviewing
+  the flags showed those caused false alarms, so they were removed.
+- Result on the current baseline: 105 of 1,326 records corrected, 45 flagged for review.
+  In a random sample of corrections, the rule was right in every case checked.
+- Lesson: **LLM plus simple rules** is more reliable than either alone. The LLM reads the
+  language; cheap deterministic rules check it.
+
+**4. The LLM gives different results on different runs.**
+- Re-running the same corpus changed results that the fix shouldn't have touched
+  (LinkedIn's AI-training sentence disappeared; Uber's US notice went from 19 records to 6).
+- Response: the latest extraction is kept as the **baseline**. Rule changes are applied
+  with `pipeline/postprocess_flows.py` (no LLM calls, same result every time), and future
+  prompt changes are tested on a few documents before the full corpus.
+- Lesson: separate the expensive, variable step (the LLM) from the cheap, deterministic
+  step (the rules), and measure variation instead of assuming outputs are stable.
+
+**5. Some practices are spread across sentences.**
+- CQ3 (location shared for advertising) returned nothing. Searching the original text
+  (`scripts/search_policies.py`) found one sentence that should answer it: Uber shares
+  approximate location "with these intermediaries".
+- The sentence was in the graph, but with purpose = service provision and recipient =
+  third party. The word that makes it about advertising, "Ad intermediaries", is in the
+  previous sentence.
+- This is the problem PoliGraph was designed to solve: earlier tools read policies one
+  sentence at a time, but a practice is often described across several.
+- Fix: a prompt rule telling the model to use earlier context for phrases like "these
+  intermediaries". Tested on Uber's policy only; CQ3 now returns Uber sharing approximate
+  location for advertising, with an opt-out.
+
+**Recall against the source text:** of 18 sentences that clearly state an AI-training
+practice, 15 were extracted (~83%); the other 3 are all flagged by the backstop rule.
+
+**Current baseline:** 13 documents from 8 services; 1,326 accepted records (57 rejected
+by the quote check); 1,202 flows in Neo4j; 38 vocabulary concepts.
+
+**Concepts:** precision (how many extracted items are right), recall (how many true items
+were found), and why a tighter rule can raise one and lower the other.
+
+**Files:** `pipeline/certainty_rules.py`, `pipeline/postprocess_flows.py`,
+`eval/run_cqs.py`, Cypher checks in Neo4j Browser
