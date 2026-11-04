@@ -1,0 +1,168 @@
+[
+  {
+    "id": "Q01",
+    "cq": "CQ1",
+    "type": "normal",
+    "question": "Does Zoom use my meeting recordings to train AI?",
+    "gold_points": [
+      "No: Zoom's documents say it does not use audio, video, chat or other communications-like Customer Content to train Zoom's or third-party AI models",
+      "Quotes or cites Zoom's privacy statement or terms of service"
+    ],
+    "must_mention": ["Zoom", "not"],
+    "verified": "yes: agent run 3 and find_flows output"
+  },
+  {
+    "id": "Q02",
+    "cq": "CQ3",
+    "type": "normal",
+    "question": "Which services share any kind of location data for advertising?",
+    "gold_points": [
+      "Uber shares approximate location with ad intermediaries",
+      "Users can opt out (of ad personalization)",
+      "No other service in the graph is shown sharing location data for advertising"
+    ],
+    "must_mention": ["Uber", "approximate location"],
+    "verified": "yes: CQ3 output after rule 11"
+  },
+  {
+    "id": "Q03",
+    "cq": "CQ5",
+    "type": "normal",
+    "question": "I live in California. Is my precise location sensitive data, and what rights do I have?",
+    "gold_points": [
+      "Yes: precise location is sensitive personal information under the CCPA",
+      "The CCPA gives a right to opt out of the sale or sharing of personal information",
+      "Says it does not give legal advice, or that this comes from the PrivacyLens ontology"
+    ],
+    "must_mention": ["CCPA|California Consumer Privacy Act", "opt out|opt-out"],
+    "verified": "yes: broader_terms and laws_and_rights output"
+  },
+  {
+    "id": "Q04",
+    "cq": "CQ1",
+    "type": "normal",
+    "question": "Which services say they use people's data to train AI or machine learning models?",
+    "gold_points": [
+      "Names services the graph shows doing or possibly doing this, including Meta, OpenAI, Spotify, TikTok, Uber and X",
+      "Distinguishes services that say they do this from those that say they may",
+      "Does not list Zoom as doing it (Zoom's documents deny it)"
+    ],
+    "must_mention": ["Meta", "OpenAI", "Uber", "X"],
+    "verified": "yes: CQ1 output (current baseline; LinkedIn's sentence is not in this run)"
+  },
+  {
+    "id": "Q05",
+    "cq": "CQ2",
+    "type": "normal",
+    "question": "Can I stop OpenAI from using my content to train its models?",
+    "gold_points": [
+      "OpenAI's policy says content you provide may be used to train its models",
+      "Yes: OpenAI says you can choose whether your content is used to train its models (an opt-out)",
+      "Mentions Temporary Chat, whose conversations are not used to improve the models (optional)"
+    ],
+    "must_mention": ["OpenAI", "opt|choose"],
+    "verified": "partly: CQ1 shows opt-out = yes for OpenAI; check the sentences"
+  },
+  {
+    "id": "Q06",
+    "cq": "CQ1",
+    "type": "nuance",
+    "question": "Does X let other companies train AI on my data?",
+    "gold_points": [
+      "If you do not opt out, recipients of information shared by X may use it for their own purposes, including training their AI models",
+      "X itself may also use information to train its own models (optional)",
+      "Uses 'may', not a definite claim"
+    ],
+    "must_mention": ["X", "opt out|opt-out"],
+    "verified": "yes: AI-training sentence check"
+  },
+  {
+    "id": "Q07",
+    "cq": "CQ1",
+    "type": "nuance",
+    "question": "Does Uber sell my personal information to train large language models?",
+    "gold_points": [
+      "No: Uber's US notice says it does not sell personal information for training large language models",
+      "But Uber does use personal information it collects to train large language models"
+    ],
+    "must_mention": ["Uber", "not sell|does not sell"],
+    "verified": "yes: AI-training sentence check"
+  },
+  {
+    "id": "Q08",
+    "cq": "CQ4",
+    "type": "normal",
+    "question": "What kinds of personal data does Uber say it collects?",
+    "gold_points": [
+      "Location data",
+      "Usage data, such as trip or order information",
+      "User content, such as in-vehicle recordings",
+      "Sensitive personal data, such as identity verification information"
+    ],
+    "must_mention": ["location"],
+    "verified": "yes: CQ4 output after the Uber re-extraction"
+  },
+  {
+    "id": "Q09",
+    "cq": "CQ4",
+    "type": "normal",
+    "question": "Does TikTok collect biometric data?",
+    "gold_points": [
+      "TikTok says it may collect biometric identifiers and biometric information, such as faceprints and voiceprints, from user content",
+      "This statement is in TikTok's US privacy policy",
+      "Uses 'may', not a definite claim"
+    ],
+    "must_mention": ["TikTok", "faceprint|voiceprint|biometric"],
+    "verified": "yes: certainty-correction sample"
+  },
+  {
+    "id": "Q10",
+    "cq": "CQ5",
+    "type": "normal",
+    "question": "I live in the EU. Can I object to my data being used for marketing?",
+    "gold_points": [
+      "Yes: GDPR gives a right to object, which in the ontology concerns marketing",
+      "GDPR applies in the European Economic Area",
+      "Says it does not give legal advice, or that this comes from the PrivacyLens ontology"
+    ],
+    "must_mention": ["GDPR|General Data Protection Regulation", "object"],
+    "verified": "yes: laws_and_rights output"
+  },
+  {
+    "id": "Q11",
+    "cq": "none",
+    "type": "trap",
+    "question": "Does Netflix use my viewing history for advertising?",
+    "gold_points": [
+      "Netflix is not among the services in the PrivacyLens graph, so it cannot answer",
+      "Does not make any claim about what Netflix does"
+    ],
+    "must_mention": ["Netflix"],
+    "verified": "yes: list_services output"
+  },
+  {
+    "id": "Q12",
+    "cq": "CQ5",
+    "type": "trap",
+    "question": "What rights do I have under India's DPDP Act?",
+    "gold_points": [
+      "The ontology includes India's Digital Personal Data Protection Act, but no rights are recorded for it",
+      "Does not list rights from its own knowledge"
+    ],
+    "must_mention": ["DPDP|Digital Personal Data Protection"],
+    "verified": "yes: laws_and_rights output"
+  },
+  {
+    "id": "Q13",
+    "cq": "CQ1",
+    "type": "trap",
+    "question": "Does Spotify sell my data to companies that train AI models?",
+    "gold_points": [
+      "The graph does not show Spotify selling data for AI training",
+      "Spotify's policy does mention developing and training machine learning models itself (optional)",
+      "Does not conclude that Spotify never does it; only that its policy text in the graph does not say so"
+    ],
+    "must_mention": ["Spotify"],
+    "verified": "partly: CQ1 shows one Spotify AI-training flow; check there is no 'sell' flow"
+  }
+]
