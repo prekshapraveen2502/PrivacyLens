@@ -201,3 +201,26 @@ were found), and why a tighter rule can raise one and lower the other.
 
 **Files:** `pipeline/certainty_rules.py`, `pipeline/postprocess_flows.py`,
 `eval/run_cqs.py`, Cypher checks in Neo4j Browser
+
+## Step 8: The agent (November 4)
+
+**What:** an LLM agent answers plain-English questions by calling tools over both graphs
+(`agent/tools.py`, `agent/agent.py`). It never queries the databases itself.
+
+**Tools:** concept lookup, hierarchy expansion, broader terms and laws (GraphDB); services,
+filtered data flows with source sentences, read-only Cypher (Neo4j). Cypher is refused if
+it contains write keywords, and runs in a read-only transaction.
+
+**Testing on three questions (Zoom AI training, location for advertising, California rights):**
+- Run 1, 1 of 3: empty filter lists matched nothing (tool bug); "AI" matched inside
+  "details" (substring bug); the vocabulary lacked users' words ("recordings", "audio").
+- Run 2, 2 of 3: the agent kept filtering by certainty despite instructions, hiding
+  Zoom's "does not" statement.
+- Run 3, 3 of 3: the certainty filter was removed from the tool the agent sees.
+
+**Lessons:**
+- The agent's traces are a query log: they show the gap between users' words and the
+  vocabulary (Talisman, Chapter 1, on search logs). User wording was added to PL-006.
+- Instructions are requests, not guarantees. When the model repeats a wrong call, change
+  the tool so the wrong call isn't possible.
+- Three questions show the debugging works, not that the agent is accurate.
