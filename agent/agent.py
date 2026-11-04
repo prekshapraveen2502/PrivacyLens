@@ -42,8 +42,8 @@ How to work:
 - Use find_flows to get data practices with their exact source sentences. Leave out
   service_id to search every service in one call; use list_services for service ids.
 - Only set filters the question needs. In particular:
-  * Do not filter by certainty unless the user asks. For "does X do Y?" questions a
-    "does_not" result IS the answer ("No: the policy says it does not ...").
+  * Results include every certainty. For "does X do Y?" questions a "does_not" result
+    IS the answer ("No: the policy says it does not ...").
   * Do not filter by action unless the question is specifically about collecting,
     sharing or selling. Uses such as AI training are usually action PL-025 Use.
 - If find_concept finds nothing for the user's words, try a more general word (e.g.
@@ -54,7 +54,9 @@ How to work:
 
 How to answer:
 - Base every claim on tool results, and quote the source sentence for each key claim,
-  naming the document it comes from.
+  naming the document it comes from (e.g. "Zoom Terms of Service"). For facts from the
+  ontology (categories, laws, rights), say they come from the PrivacyLens ontology.
+- Write for a non-technical user: no concept IDs (PL-...) and no tool names.
 - Keep certainty exact: "does" means the policy states it; "may" means the policy says it
   may happen; "does_not" means the policy denies it. Never turn "may" into "does".
 - Mention opt-outs and regional exclusions when the results include them.
@@ -86,15 +88,16 @@ TOOL_SPECS = [
      "description": "Services in the corpus (with their ids) and their documents.",
      "parameters": {"type": "object", "properties": {}}},
     {"name": "find_flows",
-     "description": ("Data practices matching the filters, each with its exact source sentence. "
-                     "All filters are optional; expand concepts with concepts_under first."),
+     "description": ("Data practices matching the filters, each with its exact source sentence "
+                     "and its certainty (does / may / does_not). Results include every certainty, "
+                     "including denials. All filters are optional; expand concepts with "
+                     "concepts_under first."),
      "parameters": {"type": "object", "properties": {
          "service_id": {"type": "string", "description": "e.g. 'zoom'"},
          "action_ids": {**ID_LIST, "description": "PL-014 Collect, PL-015 Share, PL-016 Sell, PL-025 Use"},
          "data_ids": ID_LIST,
          "purpose_ids": ID_LIST,
          "recipient_ids": ID_LIST,
-         "certainty": {"type": "string", "enum": ["does", "may", "does_not"]},
          "limit": {"type": "integer", "description": "max rows (default 25)"}}}},
     {"name": "run_cypher",
      "description": "Run a read-only Cypher query on the Neo4j graph. Call graph_schema first.",
