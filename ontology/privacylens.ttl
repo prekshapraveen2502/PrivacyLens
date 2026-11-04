@@ -146,12 +146,19 @@ c:PL-005 a owl:NamedIndividual,
 c:PL-006 a owl:NamedIndividual,
         skos:Concept ;
     dcterms:created "2026-10-21"^^xsd:date ;
-    dcterms:source "Zoom terms s.10.1 (Customer Content); Uber rider notice (user content)"@en ;
-    skos:altLabel "customer content"@en,
+    dcterms:source "Zoom terms s.10.1 (Customer Content); Uber rider notice (user content); agent query logs (user wording)"@en ;
+    skos:altLabel "audio"@en,
+        "chat messages"@en,
+        "customer content"@en,
+        "meeting content"@en,
+        "meeting recordings"@en,
         "messages"@en,
         "posts"@en,
+        "recordings"@en,
         "uploaded photos"@en,
         "user-generated content"@en,
+        "video"@en,
+        "voice recordings"@en,
         "your content"@en ;
     skos:broader c:PL-001 ;
     skos:definition "Content that a person creates, uploads, or sends through a service, such as posts, messages, photos, recordings, or files."@en ;

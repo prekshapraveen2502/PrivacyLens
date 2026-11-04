@@ -73,22 +73,42 @@ def _check_id(concept_id):
 
 # ---------------------------------------------------------------- GraphDB tools
 
-def find_concept(text):
-    """Vocabulary concepts whose preferred or alternative label contains `text`."""
-    needle = text.replace("\\", "").replace('"', "").lower()
-    rows = _sparql(f'''
-        SELECT ?id ?label ?scheme (GROUP_CONCAT(DISTINCT ?alt; separator="; ") AS ?also_called)
-        WHERE {{
+@lru_cache(maxsize=1)
+def _all_concepts():
+    """Every vocabulary concept with its labels and definition (cached; the vocabulary is small)."""
+    rows = _sparql('''
+        SELECT ?id ?label ?scheme ?definition (GROUP_CONCAT(DISTINCT ?alt; separator="; ") AS ?also_called)
+        WHERE {
           ?c skos:notation ?id ; skos:prefLabel ?label .
-          OPTIONAL {{ ?c skos:inScheme/skos:prefLabel ?scheme }}
-          OPTIONAL {{ ?c skos:altLabel ?alt }}
-          FILTER EXISTS {{
-            {{ ?c skos:prefLabel ?l }} UNION {{ ?c skos:altLabel ?l }}
-            FILTER(CONTAINS(LCASE(STR(?l)), "{needle}"))
-          }}
-        }}
-        GROUP BY ?id ?label ?scheme ORDER BY ?id''')
-    return rows[:MAX_ROWS]
+          OPTIONAL { ?c skos:inScheme/skos:prefLabel ?scheme }
+          OPTIONAL { ?c skos:definition ?definition }
+          OPTIONAL { ?c skos:altLabel ?alt }
+        }
+        GROUP BY ?id ?label ?scheme ?definition ORDER BY ?id''')
+    return tuple(rows)
+
+
+def _whole_words(phrase):
+    return re.compile(r"\b" + r"\s+".join(map(re.escape, phrase.lower().split())) + r"\b")
+
+
+def find_concept(text):
+    """Vocabulary concepts matching `text` as whole words.
+
+    First looks for the phrase in preferred and alternative labels; if nothing matches,
+    looks for all of its words in labels and definitions. "AI" therefore no longer matches
+    inside words such as "details" or "email".
+    """
+    concepts = _all_concepts()
+    phrase = _whole_words(text)
+    hits = [c for c in concepts
+            if phrase.search(c["label"].lower()) or phrase.search(c.get("also_called", "").lower())]
+    if not hits:
+        words = [_whole_words(w) for w in text.lower().split() if len(w) > 2]
+        hits = [c for c in concepts if words and all(
+            w.search(" ".join([c["label"], c.get("also_called", ""), c.get("definition", "")]).lower())
+            for w in words)]
+    return [{k: c.get(k, "") for k in ("id", "label", "scheme", "also_called")} for c in hits][:MAX_ROWS]
 
 
 def concepts_under(concept_id):
@@ -141,6 +161,10 @@ def find_flows(service_id=None, action_ids=None, data_ids=None, purpose_ids=None
     All filters are optional. Use concept IDs (e.g. data_ids=["PL-003"]); to include
     narrower concepts, expand them first with concepts_under().
     """
+    # Empty lists or strings mean "no filter" (the LLM often sends [] for unused filters).
+    action_ids, data_ids, purpose_ids, recipient_ids = (
+        ids or None for ids in (action_ids, data_ids, purpose_ids, recipient_ids))
+    service_id, certainty = service_id or None, certainty or None
     for ids in (action_ids, data_ids, purpose_ids, recipient_ids):
         for i in ids or []:
             _check_id(i)

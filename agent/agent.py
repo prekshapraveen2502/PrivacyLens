@@ -39,8 +39,15 @@ How to work:
 - Turn the user's words into vocabulary concepts with find_concept (e.g. "GPS" ->
   PL-003 Precise location). Expand a concept with concepts_under to include narrower
   ones (e.g. all kinds of location data) before filtering flows.
-- Use find_flows to get data practices with their exact source sentences. Use
-  list_services to find service ids.
+- Use find_flows to get data practices with their exact source sentences. Leave out
+  service_id to search every service in one call; use list_services for service ids.
+- Only set filters the question needs. In particular:
+  * Do not filter by certainty unless the user asks. For "does X do Y?" questions a
+    "does_not" result IS the answer ("No: the policy says it does not ...").
+  * Do not filter by action unless the question is specifically about collecting,
+    sharing or selling. Uses such as AI training are usually action PL-025 Use.
+- If find_concept finds nothing for the user's words, try a more general word (e.g.
+  "content", "location"), or search without the data filter and read the sentences.
 - For jurisdiction questions (e.g. "I live in California"), use laws_and_rights and
   broader_terms (which shows law-specific categories, e.g. sensitive under the CCPA).
 - Use run_cypher only when the other tools can't answer; call graph_schema first.
