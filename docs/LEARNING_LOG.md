@@ -224,3 +224,83 @@ it contains write keywords, and runs in a read-only transaction.
 - Instructions are requests, not guarantees. When the model repeats a wrong call, change
   the tool so the wrong call isn't possible.
 - Three questions show the debugging works, not that the agent is accurate.
+
+---
+
+## Step 9: Evaluating the agent (November 4–9)
+
+**What:** a gold set of 13 questions (`eval/agent_eval_set.json`): 8 normal, 2 nuance,
+3 trap. Each is mapped to a competency question and has gold points and required
+mentions. `eval/eval_agent.py` runs every question twice and scores each answer three ways:
+- *Grounding* (automatic): every quoted sentence must exist among the policy sentences in
+  Neo4j. An ungrounded quote may be a hallucination.
+- *Mentions* (automatic): the answer must name the required items.
+- *Judge* (LLM-as-judge): a second model compares the answer with the gold points and
+  returns correct / partial / incorrect, with what is missing and what is unsupported.
+- *Consistency*: whether a question gets the same verdict on both runs.
+
+**Results on the dev set (same judge model every time):** 50% → 65% → 73% → 92% correct.
+
+**Run 4 (November 9):**
+- 24 of 26 answers correct (92%), 2 partial, 0 incorrect.
+- Same verdict on both runs for 13 of 13 questions (an earlier run had 7 of 13).
+- 48 of 49 quoted fragments grounded; no answer missed a required mention.
+- Correct on all nuance (4/4) and trap (6/6) answers.
+
+**What changed before run 4:**
+1. *Tool fix (Q07).* With `disclosure_only` set, the tool returned only sharing and
+   selling flows, so Uber's "does not sell personal information to train large language
+   models" came back without Uber's "uses personal information … to train large language
+   models". The tool now returns `shared_or_sold` plus
+   `other_practices_not_shared_or_sold`, so the agent sees both halves.
+2. *Gold correction (Q08).* The gold expected contact information and device identifiers,
+   taken from an earlier Uber extraction. After Uber was re-extracted those were no longer
+   collection records, so the gold was changed to match the current graph.
+3. *Judge calibration.* The judge now accepts wording that means the same as a gold point,
+   including the vocabulary's category names.
+
+**Reading the two remaining issues:**
+- *Q03, one ungrounded quote.* The quote was "Right to opt out of sale or sharing": the
+  name of a right in the ontology, which the agent got from GraphDB. The grounding check
+  only covers policy sentences in Neo4j, not ontology labels. Not a hallucination; a limit
+  of the check.
+- *Q08, partial on both runs.* The agent listed Uber's own data categories (account
+  information, demographic data, device data, communications data, in-vehicle recordings
+  and others); checked with `grep`, they are real policy text. The gold has only four
+  categories because it was built from the graph's collection records, and extraction
+  missed several. In Uber's policy these categories are rows of a **table**, and the
+  collection verb is in the table's heading, not in each row. Likely cause (not yet
+  checked row by row): the extractor has to carry the heading's meaning down to each row.
+  The gold was not edited again: changing it a second time after seeing results would make
+  the score less trustworthy.
+
+**Link to PoliGraph:** PoliGraph-er cannot parse tables at all (its stated limitation), and
+uses a List Annotator to pass "the following information:" down to each list item. Run 4
+found the same problem in LLM extraction: it reads the table but misses rows whose meaning
+depends on the heading. Table- and heading-aware extraction goes on the roadmap.
+
+**Lessons:**
+- **This is a dev-set score after iteration.** The jump to 92% combines a tool fix, a gold
+  correction and judge calibration, so not all of it is the agent improving. The honest
+  number will come from questions written after the freeze.
+- **Read failures before fixing them.** Q08 looked like an agent error; it was a gap
+  between the gold and the policy, which in turn exposed an extraction gap.
+- **Gold sets need checking too.** A gold answer is only as good as the data it was built
+  from.
+
+**Files:** `eval/agent_eval_set.json`, `eval/eval_agent.py`, `agent/tools.py`,
+`agent/agent.py`; full answers in `eval/results/` (git-ignored)
+
+---
+
+## Step 10: Freeze (November 9)
+
+**What:** the agent is frozen at git tag `agent-v1`. Nothing in `agent/` changes until the
+held-out evaluation is done.
+
+**Concept:** a held-out test set. Every question in the dev set has been used to find and
+fix problems, so the dev score is optimistic. New questions, written and committed before
+the frozen agent sees them and run once, measure how it does on questions it was not
+tuned for.
+
+**Next:** write the held-out questions and commit them, then run `agent-v1` on them once.
