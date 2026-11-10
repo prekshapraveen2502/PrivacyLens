@@ -304,3 +304,76 @@ the frozen agent sees them and run once, measure how it does on questions it was
 tuned for.
 
 **Next:** write the held-out questions and commit them, then run `agent-v1` on them once.
+
+---
+
+## Step 11: Held-out evaluation (November 9)
+
+**What:** 9 new questions (`eval/heldout_set.json`), built from graph evidence
+(`eval/midterm_evidence.py`, GraphDB SPARQL for H08) and committed before the frozen
+agent (`agent-v1`) saw them. Run once with `eval_agent.py --set eval/heldout_set.json`.
+No changes afterward.
+
+**Results:**
+
+| | Dev set (tuned) | Held-out |
+|---|---|---|
+| Correct | 92% | 50% (9/18) |
+| Correct or partial | 100% | 83% (15/18) |
+| Quotes grounded | 48/49 | 40/43 (93%) |
+| Same verdict on both runs | 13/13 | 3/9 |
+
+By type: normal 5/8, nuance 1/6, trap 3/4.
+
+**Reading the failures:**
+- *Gold errors (mine).* H02: the gold said the graph has no LinkedIn AI-training
+  statement, because my query only checked the "AI model training" purpose label. The
+  agent quoted a grounded LinkedIn sentence about training AI models: the sentence is in
+  the graph under a different purpose. H06: my query only looked at "may" statements, so
+  the gold missed TikTok's EEA "we collect … precise location" statement; the agent
+  distinguished the EEA and US policies correctly. H05 run 1: the agent cited a different
+  true sentence than the gold expected.
+- *Agent errors.* Incomplete lists on cross-service questions (H03 run 2 missed Uber;
+  H07 run 2 listed 5 of 8 services). Missing conditions: H01 run 1 missed the "turn off
+  Location Services" statement; H04 missed Zoom's "not in the conventional sense" wording
+  and the note that ad and analytics services may count as a sale.
+- *Judge limits.* True, grounded extra detail is marked "unsupported" when the gold does
+  not list it (H04, H07). The judge sees the gold, not the graph.
+
+The score was not changed after the run.
+
+**Lessons:**
+- **The held-out drop (92% → 50%) shows how much of the dev score came from tuning.**
+- **A gold answer must be checked against the whole graph, not one filtered query.**
+  A narrow query produced a wrong gold answer twice.
+- **An LLM-as-judge is only as good as its gold.** It cannot tell a hallucination from a
+  true detail the gold left out.
+- **Nuance is still the weakest area** (1/6): conditions, opt-outs, and region
+  differences.
+- H02 also shows an extraction gap: LinkedIn's AI-training sentence is in the graph but
+  is not labeled with the AI model training purpose.
+
+**Next:** for cross-service questions, a tool that returns per-service counts so lists
+are complete; and gold built from several queries per question.
+
+---
+
+## Step 12: Extraction precision and graph metrics (November 9–10)
+
+**Precision sample:** 60 flows (`eval/compute_metrics.py sample`, seed 42, spread across
+services), labeled with Claude's help and reviewed by me. Labels: correct (every field
+supported), partial (core practice right, one field off), wrong (quote doesn't support it).
+- Strict (correct only): 32/60 = 53.3% (95% CI 41–65%)
+- Core (correct + partial): 53/60 = 88.3% (95% CI 78–94%); PoliGraph's COLLECT precision
+  is 90.4%, which is inside this interval: comparable, on a different dataset.
+- Error types: list-item and heading fragments (the same problem as Q08 and PoliGraph's
+  List Annotator); reversed direction ("sends your information to us" stored as sharing);
+  wrong purpose; one lost negation; non-practice sentences (a user right, a scope sentence).
+
+**From the graph (`eval/midterm_evidence.py`):**
+- 63% of location flows (42/67) are found only through the hierarchy.
+- 50.9% of flows name only generic "Personal data".
+- Certainty: does 77.6%, may 20.4%, does not 2.0%.
+
+**Lesson:** PrivacyLens records more per flow than PoliGraph (purpose, recipient, certainty),
+so a strict check is harder to pass. The fair comparison is on the core practice.
