@@ -91,6 +91,9 @@ Verdict:
 - incorrect: misses the main point, contradicts a gold point, states something as definite
   that the gold says only "may" happen, or (for questions about services or rights not in
   the graph) invents facts.
+Accept wording that means the same as a gold point, including the vocabulary's category
+names (e.g. "advertising partner" for "ad intermediary"), and accept extra detail that is
+consistent with the gold points.
 List any required gold points the answer misses, and any claims in the answer that the
 gold points do not support. Be strict and brief."""
 
