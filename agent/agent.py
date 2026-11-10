@@ -45,7 +45,10 @@ How to work:
 - Only set filters the question needs. Results include every action and certainty:
   read them. For "does X do Y?" questions a "does_not" result IS the answer ("No: the
   policy says it does not ..."). For questions about sharing or selling data with
-  others, set disclosure_only to true.
+  others, set disclosure_only to true. Its "shared_or_sold" list answers the question;
+  "other_practices_not_shared_or_sold" are related practices (for example "does not sell
+  it, but does use it") that you should mention when they change the picture, clearly
+  labeled as not sharing or selling.
 - If a result says it was TRUNCATED, results are missing: search again more narrowly
   (e.g. one service at a time) before answering.
 - If find_concept finds nothing for the user's words, try a more general word (e.g.
@@ -110,7 +113,9 @@ TOOL_SPECS = [
          "purpose_ids": ID_LIST,
          "recipient_ids": ID_LIST,
          "disclosure_only": {"type": "boolean",
-                             "description": "true = only practices where data is shared with or sold to others"},
+                             "description": ("true = main results are practices where data is shared with "
+                                             "or sold to others; related practices (use, collect) for the "
+                                             "same filters are listed separately")},
          "limit": {"type": "integer", "description": "max rows (default 25, max 50)"}}}},
     {"name": "run_cypher",
      "description": "Run a read-only Cypher query on the Neo4j graph. Call graph_schema first.",

@@ -190,15 +190,24 @@ def find_flows(service_id=None, action_ids=None, data_ids=None, purpose_ids=None
     All filters are optional. Data, purpose and recipient concepts are expanded to include
     everything below them in the hierarchy, so data_ids=["PL-002"] also finds precise and
     approximate location. An unknown service_id is an error that lists the known services.
-    disclosure_only=True keeps only practices where data is shared with or sold to others.
-    Results are ordered by service and document, with empty fields left out.
+    disclosure_only=True returns {"shared_or_sold": [...], "other_practices_not_shared_or_sold":
+    [...]}: the second list holds the other practices (use, collect) found for the same filters,
+    so a filter never hides a fact that changes the answer (e.g. "does not sell X, but does
+    use X"). Results are ordered by service and document, with empty fields left out.
     """
     # Empty lists or strings mean "no filter" (the LLM often sends [] for unused filters).
     action_ids, data_ids, purpose_ids, recipient_ids = (
         ids or None for ids in (action_ids, data_ids, purpose_ids, recipient_ids))
     service_id, certainty = service_id or None, certainty or None
     if disclosure_only:
-        action_ids = DISCLOSURE_ACTIONS
+        everything = find_flows(service_id, None, data_ids, purpose_ids, recipient_ids,
+                                certainty, disclosure_only=False, limit=MAX_ROWS)
+        shared = [r for r in everything if r.get("action") in ("Share", "Sell")]
+        other = [{k: r[k] for k in ("service", "document", "action", "data_type", "purpose",
+                                    "certainty", "sentence") if k in r}
+                 for r in everything if r.get("action") not in ("Share", "Sell")]
+        return {"shared_or_sold": shared[:int(limit)],
+                "other_practices_not_shared_or_sold": other[:10]}
     for ids in (action_ids, data_ids, purpose_ids, recipient_ids):
         for i in ids or []:
             _check_id(i)
