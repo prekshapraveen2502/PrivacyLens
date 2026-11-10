@@ -97,11 +97,10 @@
       "Location data",
       "Usage data, such as trip or order information",
       "User content, such as in-vehicle recordings",
-      "Sensitive personal data, such as identity verification information",
-      "Other categories from Uber's policy are also correct (optional): account information, demographic data, device data, communications data"
+      "Sensitive personal data, such as identity verification information"
     ],
     "must_mention": ["location"],
-    "verified": "yes: CQ4 output plus all Uber collection flows in Neo4j"
+    "verified": "yes: CQ4 output after the Uber re-extraction"
   },
   {
     "id": "Q09",
