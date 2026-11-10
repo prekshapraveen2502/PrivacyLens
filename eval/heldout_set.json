@@ -1,0 +1,115 @@
+[
+  {
+    "id": "H01",
+    "cq": "CQ3",
+    "type": "nuance",
+    "question": "Does Meta use my precise location to show me ads, and can I stop it?",
+    "gold_points": [
+      "Yes: Meta says it uses GPS location information to show ads, such as ads for local businesses nearby",
+      "Meta also uses GPS location for service purposes, such as finding nearby Wi-Fi networks (optional)",
+      "Meta collects GPS location when Location Services is turned on in the device settings; if you turn it off, Meta says it stops collecting GPS information"
+    ],
+    "must_mention": ["Meta", "ads|advertising"],
+    "verified": "yes: Neo4j query on Meta flows with data type Precise location"
+  },
+  {
+    "id": "H02",
+    "cq": "CQ1",
+    "type": "trap",
+    "question": "Does LinkedIn use my data to train AI models?",
+    "gold_points": [
+      "The graph has no AI-training statements for LinkedIn",
+      "Does not claim LinkedIn trains AI on user data from its own knowledge",
+      "Does not conclude that LinkedIn never does it; only that the policy text in the graph does not say so"
+    ],
+    "must_mention": ["LinkedIn"],
+    "verified": "yes: midterm_evidence.py, LinkedIn + AI model training returned 0 flows"
+  },
+  {
+    "id": "H03",
+    "cq": "CQ12",
+    "type": "normal",
+    "question": "Which services share device identifiers with advertising partners?",
+    "gold_points": [
+      "LinkedIn: shares hashed IDs or device identifiers with advertisers in limited cases",
+      "Uber: shares mobile advertising IDs or device identifiers with ad and marketing publishers and ad intermediaries",
+      "Statements from Meta and X describe partners sharing device IDs with them, not them sharing device IDs with advertisers (optional)"
+    ],
+    "must_mention": ["LinkedIn", "Uber"],
+    "verified": "yes: midterm_evidence.py, device identifiers shared or sold"
+  },
+  {
+    "id": "H04",
+    "cq": "CQ12",
+    "type": "nuance",
+    "question": "Does Zoom sell my personal data?",
+    "gold_points": [
+      "Zoom says it does not sell personal data covered by its privacy statement in the conventional sense",
+      "Zoom says it may allow advertising and analytics services on its website or app, which may count as a sale or sharing of data under some laws",
+      "Zoom says its privacy statement does not cover sales of business contact data, which may happen through Zoom Common Room (optional)"
+    ],
+    "must_mention": ["Zoom"],
+    "verified": "yes: midterm_evidence.py, Zoom + sell"
+  },
+  {
+    "id": "H05",
+    "cq": "CQ4",
+    "type": "normal",
+    "question": "Does Zoom get information about me from other companies?",
+    "gold_points": [
+      "Yes: Zoom says it obtains information about account owners and their users from third-party companies, such as market data enrichment services",
+      "This can include company size or industry, contact information, or activity"
+    ],
+    "must_mention": ["Zoom"],
+    "verified": "yes: midterm_evidence.py, Zoom + contact information"
+  },
+  {
+    "id": "H06",
+    "cq": "CQ4",
+    "type": "nuance",
+    "question": "Does TikTok collect my precise location?",
+    "gold_points": [
+      "TikTok says it may collect precise location data, depending on your settings",
+      "This is a 'may' statement, not a statement that it always does"
+    ],
+    "must_mention": ["TikTok"],
+    "verified": "yes: midterm_evidence.py, TikTok + 'may' statements"
+  },
+  {
+    "id": "H07",
+    "cq": "CQ3",
+    "type": "normal",
+    "question": "Which services' policies mention any kind of location data?",
+    "gold_points": [
+      "All eight services in the graph: LinkedIn, Meta, OpenAI, Spotify, TikTok, Uber, X and Zoom",
+      "Some mention it only as precise or approximate location (for example Zoom, only approximate location)"
+    ],
+    "must_mention": ["Zoom", "Spotify"],
+    "verified": "yes: midterm_evidence.py, any kind of location data by service"
+  },
+  {
+    "id": "H08",
+    "cq": "CQ3",
+    "type": "normal",
+    "question": "Under GDPR, is my precise location a special category of personal data?",
+    "gold_points": [
+      "No: in the PrivacyLens ontology, precise location is not under GDPR special categories of personal data",
+      "It is personal data, and under the CCPA it is sensitive personal information (optional)",
+      "Frames this as what the ontology records, not legal advice (optional)"
+    ],
+    "must_mention": ["GDPR|General Data Protection"],
+    "verified": "yes: GraphDB SPARQL, broader concepts of Precise location = Location data, Sensitive personal information (CCPA), Personal data"
+  },
+  {
+    "id": "H09",
+    "cq": "CQ12",
+    "type": "trap",
+    "question": "Does Snapchat share my location with advertisers?",
+    "gold_points": [
+      "Snapchat is not one of the services in the graph",
+      "Does not answer from its own knowledge about Snapchat's practices"
+    ],
+    "must_mention": ["Snapchat"],
+    "verified": "yes: Snapchat is not among the 8 services in Neo4j"
+  }
+]

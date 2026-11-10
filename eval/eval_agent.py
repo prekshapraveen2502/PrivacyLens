@@ -188,6 +188,7 @@ def rescore(path, rejudge):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--set", help="question file (default: eval/agent_eval_set.json)")
     parser.add_argument("--runs", type=int, default=2, help="answers per question")
     parser.add_argument("--only", help="comma-separated question ids, e.g. Q01,Q11")
     parser.add_argument("--rescore", metavar="RESULTS_FILE",
@@ -195,6 +196,9 @@ def main():
     parser.add_argument("--rejudge", action="store_true",
                         help="with --rescore: also re-run the judge (uses OPENAI_JUDGE_MODEL)")
     args = parser.parse_args()
+    global EVAL_SET
+    if args.set:
+        EVAL_SET = Path(args.set).resolve()
     if args.rescore:
         return rescore(Path(args.rescore), args.rejudge)
 
