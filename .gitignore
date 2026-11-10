@@ -22,3 +22,4 @@ docs/*.png
 
 data/extracted/*
 !data/extracted/runs.csv
+/eval/results
