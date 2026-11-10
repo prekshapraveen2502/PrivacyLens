@@ -22,5 +22,8 @@ docs/*.png
 
 data/extracted/*
 !data/extracted/runs.csv
-/eval/results
+
+# Agent evaluation answers (they quote policy text)
 eval/results/
+eval/flows.csv
+eval/midterm_evidence.txt
