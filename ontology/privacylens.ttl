@@ -146,12 +146,19 @@ c:PL-005 a owl:NamedIndividual,
 c:PL-006 a owl:NamedIndividual,
         skos:Concept ;
     dcterms:created "2026-10-21"^^xsd:date ;
-    dcterms:source "Zoom terms s.10.1 (Customer Content); Uber rider notice (user content)"@en ;
-    skos:altLabel "customer content"@en,
+    dcterms:source "Zoom terms s.10.1 (Customer Content); Uber rider notice (user content); agent query logs (user wording)"@en ;
+    skos:altLabel "audio"@en,
+        "chat messages"@en,
+        "customer content"@en,
+        "meeting content"@en,
+        "meeting recordings"@en,
         "messages"@en,
         "posts"@en,
+        "recordings"@en,
         "uploaded photos"@en,
         "user-generated content"@en,
+        "video"@en,
+        "voice recordings"@en,
         "your content"@en ;
     skos:broader c:PL-001 ;
     skos:definition "Content that a person creates, uploads, or sends through a service, such as posts, messages, photos, recordings, or files."@en ;
@@ -682,9 +689,14 @@ c:PL-012 a owl:NamedIndividual,
 c:PL-024 a owl:NamedIndividual,
         skos:Concept ;
     dcterms:created "2026-10-21"^^xsd:date ;
-    dcterms:source "DPV personal data taxonomy"@en ;
-    skos:altLabel "sensitive data"@en,
-        "sensitive information"@en ;
+    dcterms:source "DPV personal data taxonomy; TikTok US policy (biometric identifiers); Uber rider notice (biometric data); agent query logs"@en ;
+    skos:altLabel "biometric data"@en,
+        "biometric identifiers"@en,
+        "biometric information"@en,
+        "faceprints"@en,
+        "sensitive data"@en,
+        "sensitive information"@en,
+        "voiceprints"@en ;
     skos:broader c:PL-001 ;
     skos:definition "Personal data that needs extra protection because its misuse could seriously harm the person."@en ;
     skos:exactMatch dpv:SensitivePersonalData ;

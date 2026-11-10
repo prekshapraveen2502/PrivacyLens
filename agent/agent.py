@@ -1,0 +1,184 @@
+"""
+PrivacyLens agent: answers questions about privacy policies using the knowledge graph.
+
+How it works:
+  1. The question goes to the LLM together with descriptions of the tools in tools.py.
+  2. The LLM either answers, or asks to call one or more tools.
+  3. This script runs the requested tools and sends the results back.
+  4. Repeat until the LLM answers (or MAX_STEPS is reached).
+The LLM never queries the databases itself; it can only ask for these tools.
+
+Usage:
+    python agent/agent.py "Does Zoom use my meeting recordings to train AI?"
+    python agent/agent.py "Which services share location data for advertising?" --trace
+--trace prints every tool call and a preview of its result, so you can see how the
+agent reached its answer.
+"""
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tools import TOOLS  # noqa: E402
+
+ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(ROOT / ".env")
+MODEL = os.getenv("OPENAI_AGENT_MODEL", os.getenv("OPENAI_MODEL", "gpt-5.4-mini"))
+MAX_STEPS = 8
+MAX_TOOL_OUTPUT = 30000      # characters of tool output sent back to the LLM
+
+INSTRUCTIONS = """You answer questions about what companies' privacy policies say, using ONLY
+the PrivacyLens knowledge graph through the tools provided. Never answer from your own
+knowledge of these companies.
+
+How to work:
+- Turn the user's words into vocabulary concepts with find_concept (e.g. "GPS" ->
+  PL-003 Precise location). Expand a concept with concepts_under to include narrower
+  ones (e.g. all kinds of location data) before filtering flows.
+- Use find_flows to get data practices with their exact source sentences. Leave out
+  service_id to search every service in one call; use list_services for service ids.
+  If a service is not in the graph, say that PrivacyLens does not cover it.
+- Only set filters the question needs. Results include every action and certainty:
+  read them. For "does X do Y?" questions a "does_not" result IS the answer ("No: the
+  policy says it does not ..."). For questions about sharing or selling data with
+  others, set disclosure_only to true. Its "shared_or_sold" list answers the question;
+  "other_practices_not_shared_or_sold" are related practices (for example "does not sell
+  it, but does use it") that you should mention when they change the picture, clearly
+  labeled as not sharing or selling.
+- If a result says it was TRUNCATED, results are missing: search again more narrowly
+  (e.g. one service at a time) before answering.
+- If find_concept finds nothing for the user's words, try a more general word (e.g.
+  "content", "location"), or search without the data filter and read the sentences.
+- When reporting several services, say which ones state a practice ("does") and which
+  say they may do it ("may").
+- Answer the question that was asked. If you find closely related facts (e.g. a service
+  that uses data in the way asked about but does not share it), you may add them in a
+  separate, clearly labeled note; never mix them into the main answer.
+- For jurisdiction questions (e.g. "I live in California"), use laws_and_rights and
+  broader_terms (which shows law-specific categories, e.g. sensitive under the CCPA).
+- Use run_cypher only when the other tools can't answer; call graph_schema first.
+
+How to answer:
+- Base every claim on tool results, and quote the source sentence for each key claim,
+  naming the document it comes from (e.g. "Zoom Terms of Service"). For facts from the
+  ontology (categories, laws, rights), say they come from the PrivacyLens ontology.
+- Write for a non-technical user: no concept IDs (PL-...) and no tool names.
+- Keep certainty exact: "does" means the policy states it; "may" means the policy says it
+  may happen; "does_not" means the policy denies it. Never turn "may" into "does".
+- Mention opt-outs and regional exclusions when the results include them.
+- If the graph has no matching practice, say the policy text in the graph does not
+  mention it. Do not conclude that the company does not do it.
+- If a result has review_flags, say that this item is flagged for review.
+- You describe what policies say; you do not give legal advice.
+"""
+
+ID_LIST = {"type": "array", "items": {"type": "string"},
+           "description": "Concept IDs such as PL-003"}
+TOOL_SPECS = [
+    {"name": "find_concept",
+     "description": ("Find general vocabulary concepts whose label or alternative wording matches "
+                     "the text. Set include_law_terms to also get law-specific terms (for questions "
+                     "about how a law defines something); data practices never use those."),
+     "parameters": {"type": "object", "properties": {
+         "text": {"type": "string"},
+         "include_law_terms": {"type": "boolean"}},
+                    "required": ["text"]}},
+    {"name": "concepts_under",
+     "description": "A concept and every concept below it in the hierarchy.",
+     "parameters": {"type": "object", "properties": {"concept_id": {"type": "string"}},
+                    "required": ["concept_id"]}},
+    {"name": "broader_terms",
+     "description": "Everything a concept falls under, including law-specific categories.",
+     "parameters": {"type": "object", "properties": {"concept_id": {"type": "string"}},
+                    "required": ["concept_id"]}},
+    {"name": "laws_and_rights",
+     "description": "Laws in the ontology, where they apply, and the rights they grant.",
+     "parameters": {"type": "object", "properties": {}}},
+    {"name": "list_services",
+     "description": "Services in the corpus (with their ids) and their documents.",
+     "parameters": {"type": "object", "properties": {}}},
+    {"name": "find_flows",
+     "description": ("Data practices matching the filters, each with its exact source sentence, "
+                     "its action (collect / share / sell / use) and its certainty (does / may / "
+                     "does_not). Results include every action and certainty, including denials. "
+                     "Filters are optional; data, purpose and recipient concepts automatically "
+                     "include everything below them. An unknown service_id returns an error."),
+     "parameters": {"type": "object", "properties": {
+         "service_id": {"type": "string", "description": "e.g. 'zoom'"},
+         "data_ids": ID_LIST,
+         "purpose_ids": ID_LIST,
+         "recipient_ids": ID_LIST,
+         "disclosure_only": {"type": "boolean",
+                             "description": ("true = main results are practices where data is shared with "
+                                             "or sold to others; related practices (use, collect) for the "
+                                             "same filters are listed separately")},
+         "limit": {"type": "integer", "description": "max rows (default 25, max 50)"}}}},
+    {"name": "run_cypher",
+     "description": "Run a read-only Cypher query on the Neo4j graph. Call graph_schema first.",
+     "parameters": {"type": "object", "properties": {"query": {"type": "string"}},
+                    "required": ["query"]}},
+    {"name": "graph_schema",
+     "description": "Description of the Neo4j graph's nodes and relationships.",
+     "parameters": {"type": "object", "properties": {}}},
+]
+OPENAI_TOOLS = [{"type": "function", **spec} for spec in TOOL_SPECS]
+
+
+def run_tool(name, arguments):
+    """Run one tool; errors are returned to the LLM as text so it can correct itself."""
+    try:
+        args = json.loads(arguments or "{}")
+        result = TOOLS[name](**args)
+        text = json.dumps(result, ensure_ascii=False, default=str)
+    except Exception as e:
+        text = json.dumps({"error": f"{type(e).__name__}: {e}"})
+    if len(text) > MAX_TOOL_OUTPUT:
+        text = (text[:MAX_TOOL_OUTPUT] + ' ... [TRUNCATED: some results are missing. '
+                'Narrow the filters or search one service at a time before answering.]')
+    return text
+
+
+def ask(question, client=None, trace=False):
+    """Answer one question. Returns (answer, list of tool calls made)."""
+    if client is None:
+        from openai import OpenAI
+        client = OpenAI()
+    history = [{"role": "user", "content": question}]
+    calls = []
+    for step in range(1, MAX_STEPS + 1):
+        response = client.responses.create(model=MODEL, instructions=INSTRUCTIONS,
+                                           input=history, tools=OPENAI_TOOLS)
+        requested = [item for item in response.output if item.type == "function_call"]
+        if not requested:
+            return response.output_text, calls
+        history += response.output
+        for item in requested:
+            output = run_tool(item.name, item.arguments)
+            calls.append({"step": step, "tool": item.name, "arguments": item.arguments})
+            if trace:
+                print(f"  [step {step}] {item.name}({item.arguments})")
+                print(f"           -> {output[:200]}{'...' if len(output) > 200 else ''}")
+            history.append({"type": "function_call_output", "call_id": item.call_id,
+                            "output": output})
+    return "I could not finish within the step limit; try a narrower question.", calls
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("question")
+    parser.add_argument("--trace", action="store_true", help="show tool calls")
+    args = parser.parse_args()
+    if args.trace:
+        print(f"Question: {args.question}\nModel: {MODEL}\n")
+    answer, calls = ask(args.question, trace=args.trace)
+    print(("\n" if args.trace else "") + answer)
+    if args.trace:
+        print(f"\n({len(calls)} tool calls)")
+
+
+if __name__ == "__main__":
+    main()
